@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sepybet - Guías y Tutoriales Móviles Sorti365</title>
+    
+    <!-- Fuentes e Iconos FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-glow: rgba(16, 185, 129, 0.25);
+            --primary-dark: #059669;
+            --whatsapp: #25D366;
+            --instagram: #e1306c;
+            
+            --bg-body: #090d12;
+            --bg-card: #121820;
+            --bg-card-active: #1a232f;
+            --border-color: #1e293b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-app: 18px;
+            --radius-btn: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding-bottom: 90px;
+            overflow-x: hidden;
+        }
+
+        /* --- STICKY APP HEADER --- */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            background: rgba(18, 24, 32, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.85rem 1.1rem;
+        }
+
+        .app-bar {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo-badge {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            color: #fff;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .quick-social {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .icon-btn-wa { background-color: rgba(37, 211, 102, 0.15); color: var(--whatsapp); border: 1px solid rgba(37, 211, 102, 0.3); }
+        .icon-btn-ig { background-color: rgba(225, 48, 108, 0.15); color: var(--instagram); border: 1px solid rgba(225, 48, 108, 0.3); }
+        .icon-btn:active { transform: scale(0.92); }
+
+        /* --- APP MAIN LAYOUT --- */
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* --- REPRODUCTOR OPTIMIZADO PARA MÓVILES --- */
+        .mobile-player-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-app);
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-viewport {
+            position: relative;
+            width: 100%;
+            max-width: 340px; /* Ancho optimizado para pantallas verticales */
+            margin: 0 auto;
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            max-height: 580px;
+            object-fit: contain;
+            outline: none;
+        }
+
+        .player-info-bar {
+            margin-top: 0.9rem;
+            text-align: center;
+        }
+
+        .step-pill {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 0.4rem;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .active-video-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        /* --- ACCIONES RÁPIDAS DEL VIDEO --- */
+        .player-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 0.8rem;
+        }
+
+        .btn-action {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: var(--radius-btn);
+            padding: 0.65rem 0.8rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-action-primary {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .btn-action:active {
+            transform: scale(0.96);
+        }
+
+        /* --- BANNER DE SOPORTE Y CANALES --- */
+        .community-banner {
+            background: linear-gradient(135deg, #132219 0%, #121820 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--radius-app);
+            padding: 1rem 1.1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .banner-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .banner-header i {
+            font-size: 1.4rem;
+            color: var(--whatsapp);
+        }
+
+        .banner-text h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .banner-text p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .banner-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .social-link-btn {
+            padding: 0.6rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #fff;
+        }
+
+        .social-link-btn.wa { background: var(--whatsapp); color: #000; }
+        .social-link-btn.ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+
+        /* --- FILTROS Y BÚSQUEDA --- */
+        .search-box {
+            position: relative;
+            margin-bottom: 0.8rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem 0.75rem 2.6rem;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .categories-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 1rem;
+            scrollbar-width: none;
+        }
+
+        .categories-scroll::-webkit-scrollbar { display: none; }
+
+        .cat-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .cat-chip.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* --- LISTADO DE TUTORIALES --- */
+        .video-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .video-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .video-item.active {
+            background: var(--bg-card-active);
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .video-item.active .item-num {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .item-details {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .item-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-desc {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .item-play {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        /* --- TOAST NOTIFICATION --- */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #10b981;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem 1rem 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="app-bar">
+            <div class="brand-info">
+                <span class="brand-logo-badge">SEPYBET</span>
+                <div class="brand-text">
+                    <span class="brand-title">Sorti365 Guías</span>
+                    <span class="brand-subtitle"><i class="fa-solid fa-bolt"></i> Tutoriales Móviles</span>
+                </div>
+            </div>
+            <div class="quick-social">
+                <a href="https://whatsapp.com/channel/0029VbDHp8W6LwHrVRsMa43x" target="_blank" class="icon-btn icon-btn-wa" title="Canal WhatsApp">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </a>
+                <a href="https://www.instagram.com/gussepycedeno?igsh=cXcxNnZ2eGEzYW54" target="_blank" class="icon-btn icon-btn-ig" title="Instagram Official">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        
+        <div class="mobile-player-card" id="playerCard">
+            <div class="video-viewport">
+                <video id="mainVideo" controls autoplay playsinline preload="metadata">
+                    <source src="videos/56a0f0db-6ab2-4351-8b45-4b82a97c9841.mp4" type="video/mp4">
+                    Tu dispositivo no soporta la reproducción directa.
+                </video>
+            </div>
+            
+            <div class="player-info-bar">
+                <span id="videoStepTag" class="step-pill">TUTORIAL #01</span>
+                <h1 id="currentTitle" class="active-video-title">1. Inicio de sesión y acceso</h1>
+                
+                <div class="player-actions">
+                    <button class="btn-action btn-action-primary" onclick="copyDirectLink()">
+                        <i class="fa-solid fa-link"></i> Copiar Link Directo
+                    </button>
+                    <button class="btn-action" onclick="shareToWhatsApp()">
+                        <i class="fa-brands fa-whatsapp"></i> Enviar por WA
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="community-banner">
+            <div class="banner-header">
+                <i class="fa-brands fa-whatsapp"></i>
+                <div class="banner-text">
+                    <h3>Canal Oficial de Sepybet</h3>
+                    <p>Únete para recibir pronósticos, soporte y promociones al instante.</p>
+                </div>
+            </div>
+            <div class="banner-btns">
+                <a href="https://whatsapp.com/channel/0029VbDHp8W6LwHrVRsMa43x" target="_blank" class="social-link-btn wa">
+                    <i class="fa-brands fa-whatsapp"></i> Canal WhatsApp
+                </a>
+                <a href="https://www.instagram.com/gussepycedeno?igsh=cXcxNnZ2eGEzYW54" target="_blank" class="social-link-btn ig">
+                    <i class="fa-brands fa-instagram"></i> @gussepycedeno
+                </a>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Buscar guía (ej: Cash Out, Bono, Apuesta)..." onkeyup="filterVideos()">
+        </div>
+
+        <div class="categories-scroll">
+            <button class="cat-chip active" onclick="filterCategory('all', this)">Todos (11)</button>
+            <button class="cat-chip" onclick="filterCategory('cuenta', this)">Cuenta & Registro</button>
+            <button class="cat-chip" onclick="filterCategory('apuestas', this)">Apuestas & Tools</button>
+            <button class="cat-chip" onclick="filterCategory('recargas', this)">Bonos & Pagos</button>
+        </div>
+
+        <div class="video-list" id="videoListContainer">
+            <!-- Renderizado dinámico desde JS -->
+        </div>
+
+        <footer>
+            <p>&copy; Sepybet - <strong>Sorti365 CEPIVET</strong>. Optimizado para Smartphones.</p>
+        </footer>
+
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-check-circle"></i>
+        <span id="toastMsg">¡Enlace copiado al portapapeles!</span>
+    </div>
+
+    <script>
+        const tutorials = [
+            {
+                id: 1,
+                title: "1. Inicio de sesión y acceso",
+                desc: "Aprende a ingresar con tu usuario Sepybet y contraseña.",
+                src: "videos/56a0f0db-6ab2-4351-8b45-4b82a97c9841.mp4",
+                category: "cuenta"
+            },
+            {
+                id: 2,
+                title: "2. ¿Cómo hacer tu primera apuesta?",
+                desc: "Pasos guiados para elegir tu evento y confirmar jugada.",
+                src: "videos/f1c36397-9cbf-4e4c-a546-27c7a4e3cfdf.mov",
+                category: "apuestas"
+            },
+            {
+                id: 3,
+                title: "3. Cómo usar el generador de apuestas",
+                desc: "Crea combinadas automáticas según tus criterios.",
+                src: "videos/4fa169f6-8fe6-488b-86af-e856cb35803a.mp4",
+                category: "apuestas"
+            },
+            {
+                id: 4,
+                title: "4. Apuestas de la comunidad",
+                desc: "Copia y gestiona tickets de otros apostadores en vivo.",
+                src: "videos/61dd8a92-9858-49ca-b287-882145abc18b.mov",
+                category: "apuestas"
+            },
+            {
+                id: 5,
+                title: "5. ¿Cómo hacer Cash Out?",
+                desc: "Cierra tu apuesta anticipadamente para asegurar ganancias.",
+                src: "videos/729d6d4c-1e95-4efd-be06-712815ac7baf.mov",
+                category: "apuestas"
+            },
+            {
+                id: 6,
+                title: "6. ¿Cómo verificar apuestas anteriores?",
+                desc: "Consulta el historial completo de tus jugadas pasadas.",
+                src: "videos/836f3250-46b0-47ff-998d-d24bef264ace.mov",
+                category: "cuenta"
+            },
+            {
+                id: 7,
+                title: "7. ¿Cómo buscar un partido?",
+                desc: "Encuentra a tu equipo o jugador rápido con el buscador.",
+                src: "videos/4b0746fd-29fc-4158-8dc5-4cf4de2237c1.mov",
+                category: "apuestas"
+            },
+            {
+                id: 8,
+                title: "8. ¿Cómo canjear bonos?",
+                desc: "Introduce tus códigos promocionales y activa tu saldo extra.",
+                src: "videos/0688dafe-7d9f-4e0c-bd95-3e73c9ab7142.mov",
+                category: "recargas"
+            },
+            {
+                id: 9,
+                title: "9. ¿Cómo revisar estadísticas?",
+                desc: "Analiza posesión y datos clave en tiempo real.",
+                src: "videos/69df7717-a21e-43e5-8757-9a7ce6c6a5a7.mp4",
+                category: "apuestas"
+            },
+            {
+                id: 10,
+                title: "10. Generar y enviar comprobante",
+                desc: "Obtén el comprobante de Banco Guayaquil para tus recargas.",
+                src: "videos/1c89fbd5-37dd-4200-9e4e-768e561c731c.mp4",
+                category: "recargas"
+            },
+            {
+                id: 11,
+                title: "11. Menús y torneos deportivos",
+                desc: "Explora ligas internacionales y deportes disponibles.",
+                src: "videos/a7890228-99b3-471f-adfd-9185c3385068.mov",
+                category: "apuestas"
+            }
+        ];
+
+        let activeVideoId = 1;
+
+        // Renderizar lista de videos
+        function renderVideoList(items) {
+            const container = document.getElementById('videoListContainer');
+            container.innerHTML = '';
+
+            items.forEach(item => {
+                const isActive = item.id === activeVideoId;
+                const div = document.createElement('div');
+                div.className = `video-item ${isActive ? 'active' : ''}`;
+                div.onclick = () => selectVideo(item.id, true);
+
+                div.innerHTML = `
+                    <div class="item-left">
+                        <div class="item-num">#${item.id < 10 ? '0' + item.id : item.id}</div>
+                        <div class="item-details">
+                            <span class="item-title">${item.title}</span>
+                            <span class="item-desc">${item.desc}</span>
+                        </div>
+                    </div>
+                    <div class="item-play">
+                        <i class="fa-solid ${isActive ? 'fa-volume-high' : 'fa-play'}"></i>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Seleccionar video e iniciar reproducción
+        function selectVideo(id, shouldScroll = true) {
+            const tutorial = tutorials.find(t => t.id === id);
+            if (!tutorial) return;
+
+            activeVideoId = id;
+            const videoElem = document.getElementById('mainVideo');
+            const titleElem = document.getElementById('currentTitle');
+            const stepTagElem = document.getElementById('videoStepTag');
+
+            videoElem.src = tutorial.src;
+            titleElem.textContent = tutorial.title;
+            stepTagElem.textContent = `TUTORIAL #${id < 10 ? '0' + id : id}`;
+
+            videoElem.play().catch(e => console.log("Autoplay con interacción previa"));
+
+            // Actualizar URL sin recargar para soportar enlaces directos compartir
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?v=' + id;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+
+            // Re-renderizar lista para marcar activo
+            const searchVal = document.getElementById('searchInput').value;
+            if(searchVal) {
+                filterVideos();
+            } else {
+                renderVideoList(tutorials);
+            }
+
+            if (shouldScroll) {
+                document.getElementById('playerCard').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Detectar si la URL contiene un parámetro directo (ej: ?v=5)
+        function checkDeepLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoParam = urlParams.get('v');
+            if (videoParam) {
+                const parsedId = parseInt(videoParam, 10);
+                if (parsedId >= 1 && parsedId <= tutorials.length) {
+                    selectVideo(parsedId, false);
+                    return;
+                }
+            }
+            selectVideo(1, false);
+        }
+
+        function copyDirectLink() {
+            const directUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?v=' + activeVideoId;
+            
+            // Clipboard fallback
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(directUrl);
+            } else {
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = directUrl;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+            }
+
+            showToast("¡Enlace directo copiado! Envíalo a tu cliente.");
+        }
+
+        function shareToWhatsApp() {
+            const directUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?v=' + activeVideoId;
+            const tutorial = tutorials.find(t => t.id === activeVideoId);
+            const message = `👋 Hola, aquí tienes el video tutorial de Sepybet / Sorti365:\n\n*${tutorial.title}*\n\n👉 Míralo directamente aquí: ${directUrl}`;
+            
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(waUrl, '_blank');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function filterVideos() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = tutorials.filter(t => 
+                t.title.toLowerCase().includes(query) || 
+                t.desc.toLowerCase().includes(query)
+            );
+            renderVideoList(filtered);
+        }
+
+        function filterCategory(cat, chipElem) {
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            chipElem.classList.add('active');
+
+            if (cat === 'all') {
+                renderVideoList(tutorials);
+            } else {
+                const filtered = tutorials.filter(t => t.category === cat);
+                renderVideoList(filtered);
+            }
+        }
+
+        // Inicialización al cargar página
+        window.onload = function() {
+            checkDeepLink();
+        };
+    </script>
+</body>
+</html>
