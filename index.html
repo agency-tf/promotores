@@ -359,7 +359,7 @@
                     </div>
 
                     <!-- Fila de Entradas de Filtro -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
                         <div class="relative">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                             <input type="text" id="filter-search" oninput="renderLeadsList()" placeholder="Buscar por nombre, cédula..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
@@ -375,12 +375,18 @@
                             <input type="date" id="filter-date-to" onchange="renderLeadsList()" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                         </div>
 
-                        <div class="flex items-center gap-2">
+                        <div>
                             <select id="filter-tipo" onchange="renderLeadsList()" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                                 <option value="ALL">Todas las Ofertas</option>
                                 <option value="TEC">Tecnología (TEC)</option>
                                 <option value="MEL">Grado (MEL)</option>
                                 <option value="POS">Posgrado (POS)</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <select id="filter-promotor" onchange="renderLeadsList()" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
+                                <option value="ALL">Todos los Promotores</option>
                             </select>
                             <button onclick="clearAllFilters()" class="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200" title="Limpiar Filtros">
                                 <i data-lucide="filter-x" class="w-4 h-4"></i>
@@ -445,7 +451,7 @@
 
             <!-- VISTA 5: TABLA DE CRECIMIENTO Y AUMENTO DIARIO -->
             <div id="view-growth" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm fade-in space-y-4">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                     <div>
                         <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
                             <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i>
@@ -453,9 +459,17 @@
                         </h2>
                         <p class="text-xs text-slate-400">Métrica diaria de incremento de leads con respecto al día previo.</p>
                     </div>
-                    <button onclick="exportToExcel()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar Datos
-                    </button>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                            <span class="text-xs font-bold text-slate-500 pl-1">Promotor:</span>
+                            <select id="growth-filter-promotor" onchange="renderDailyGrowthTable()" class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
+                                <option value="ALL">Todos los Promotores</option>
+                            </select>
+                        </div>
+                        <button onclick="exportToExcel()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar Datos
+                        </button>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -1093,7 +1107,85 @@
                 base = base.filter(l => l.tipo === filterTipo);
             }
 
+            // Filtro por promotor en la vista general
+            const filterPromotorVal = document.getElementById('filter-promotor')?.value || 'ALL';
+            if (filterPromotorVal && filterPromotorVal !== 'ALL') {
+                base = base.filter(l => l.promotor && l.promotor.toLowerCase() === filterPromotorVal.toLowerCase());
+            }
+
             return base;
+        }
+
+        function updatePromoterDropdowns() {
+            if (!currentUser) return;
+
+            const selectFilter = document.getElementById('filter-promotor');
+            const selectGrowth = document.getElementById('growth-filter-promotor');
+
+            // Para el rol CARGA (Operadores): bloquear el desplegable estrictamente con su propio nombre
+            if (currentUser.role === 'CARGA') {
+                if (selectFilter) {
+                    selectFilter.innerHTML = `<option value="${currentUser.name}">${currentUser.name}</option>`;
+                    selectFilter.value = currentUser.name;
+                    selectFilter.disabled = true;
+                    selectFilter.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+                }
+                if (selectGrowth) {
+                    selectGrowth.innerHTML = `<option value="${currentUser.name}">${currentUser.name}</option>`;
+                    selectGrowth.value = currentUser.name;
+                    selectGrowth.disabled = true;
+                    selectGrowth.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+                }
+                return;
+            }
+
+            // Para SUPER_ADMIN y VISOR: habilitar desplegables con todos los promotores
+            if (selectFilter) { 
+                selectFilter.disabled = false; 
+                selectFilter.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-500'); 
+            }
+            if (selectGrowth) { 
+                selectGrowth.disabled = false; 
+                selectGrowth.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-500'); 
+            }
+
+            const promotersSet = new Set();
+            
+            // Obtener promotores de la lista de leads
+            leadsData.forEach(l => {
+                if (l.promotor && l.promotor.trim()) {
+                    promotersSet.add(l.promotor.trim());
+                }
+            });
+
+            // Obtener promotores de la lista de usuarios registrados
+            usersData.forEach(u => {
+                if (u.name && u.name.trim()) {
+                    promotersSet.add(u.name.trim());
+                }
+            });
+
+            const sortedPromoters = Array.from(promotersSet).sort();
+
+            const dropdownIds = ['filter-promotor', 'growth-filter-promotor'];
+            dropdownIds.forEach(id => {
+                const select = document.getElementById(id);
+                if (!select) return;
+
+                const currentVal = select.value;
+                select.innerHTML = '<option value="ALL">Todos los Promotores</option>';
+
+                sortedPromoters.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = p;
+                    select.appendChild(opt);
+                });
+
+                if (sortedPromoters.includes(currentVal)) {
+                    select.value = currentVal;
+                }
+            });
         }
 
         // --- OBTENCIÓN Y GUARDADO DE DATOS CON SUPABASE ---
@@ -1108,6 +1200,7 @@
 
                 if (!error && data) {
                     leadsData = data;
+                    updatePromoterDropdowns();
                     refreshCurrentView();
                 }
             } catch (err) {
@@ -1116,6 +1209,7 @@
         }
 
         function refreshCurrentView() {
+            updatePromoterDropdowns();
             if (activeView === 'dashboard') renderDashboard();
             if (activeView === 'leads') renderLeadsList();
             if (activeView === 'urgentes') renderUrgentLeads();
@@ -1632,7 +1726,12 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            const dataset = getUserFilteredDataset();
+            let dataset = getUserFilteredDataset();
+            const growthPromotorVal = document.getElementById('growth-filter-promotor')?.value || 'ALL';
+            if (growthPromotorVal && growthPromotorVal !== 'ALL') {
+                dataset = dataset.filter(l => l.promotor && l.promotor.toLowerCase() === growthPromotorVal.toLowerCase());
+            }
+
             const countsByDate = {};
 
             dataset.forEach(l => {
@@ -2137,10 +2236,21 @@
             document.getElementById('filter-date-from').value = '';
             document.getElementById('filter-date-to').value = '';
             document.getElementById('filter-tipo').value = 'ALL';
+            
+            const promotorSelect = document.getElementById('filter-promotor');
+            if (promotorSelect) {
+                promotorSelect.value = (currentUser && currentUser.role === 'CARGA') ? currentUser.name : 'ALL';
+            }
+            const growthPromotorSelect = document.getElementById('growth-filter-promotor');
+            if (growthPromotorSelect) {
+                growthPromotorSelect.value = (currentUser && currentUser.role === 'CARGA') ? currentUser.name : 'ALL';
+            }
+
             filterDateFrom = '';
             filterDateTo = '';
             filterTipo = 'ALL';
             renderLeadsList();
+            if (activeView === 'growth') renderDailyGrowthTable();
         }
 
         // --- SISTEMA DE TOASTS Y MODAL CONFIRMACIÓN ---
