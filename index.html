@@ -1102,9 +1102,10 @@
                 base = base.filter(l => l.fecha <= filterDateTo);
             }
 
-            // Filtro por tipo de oferta
-            if (filterTipo && filterTipo !== 'ALL') {
-                base = base.filter(l => l.tipo === filterTipo);
+            // Filtro por tipo de oferta (TEC, MEL, POS)
+            const filterTipoVal = document.getElementById('filter-tipo')?.value || 'ALL';
+            if (filterTipoVal && filterTipoVal !== 'ALL') {
+                base = base.filter(l => l.tipo && l.tipo.trim().toUpperCase() === filterTipoVal.toUpperCase());
             }
 
             // Filtro por promotor en la vista general
