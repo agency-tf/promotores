@@ -173,8 +173,25 @@
                 <div class="mt-3 sm:mt-0 flex items-center gap-2" id="role-quick-pills"></div>
             </div>
 
-            <!-- VISTA 1: DASHBOARD DE INDICADORES -->
+            <!-- VISTA 1: DASHBOARD DE INDICADORES Y ESTADÍSTICAS -->
             <div id="view-dashboard" class="app-view-page space-y-6">
+
+                <!-- Selector de Filtro de Ámbito para Estadísticas (Global vs Mis Leads) -->
+                <div id="stats-scope-selector" class="hidden bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="user-check" class="w-4 h-4 text-blue-900"></i>
+                        <span class="text-xs font-bold text-slate-700">Filtro de Métricas en Pantalla:</span>
+                    </div>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                        <button id="btn-scope-all" onclick="setStatsScope('all')" class="px-3 py-1 rounded-lg text-xs font-bold transition-all bg-white text-blue-950 shadow-sm">
+                            🌐 Todos los Leads
+                        </button>
+                        <button id="btn-scope-mine" onclick="setStatsScope('mine')" class="px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-blue-950">
+                            👤 Mis Leads Asignados
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Tarjetas de Estadísticas -->
                 <section class="grid grid-cols-2 md:grid-cols-5 gap-3.5" id="stats-summary"></section>
 
@@ -290,8 +307,11 @@
                         <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                             <div class="relative flex-1 md:w-64">
                                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                                <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar nombre, cédula..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                                <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar nombre, cédula, promotor..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
                             </div>
+                            <button id="btn-filter-mine" onclick="toggleFilterOnlyMine()" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-50 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-900">
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-blue-900"></i> Solo Mis Leads
+                            </button>
                             <button id="btn-filter-urgente" onclick="toggleFilterUrgentes()" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-50 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700">
                                 <i data-lucide="siren" class="w-3.5 h-3.5 text-rose-600"></i> Solo Urgentes
                             </button>
@@ -378,9 +398,80 @@
         </main>
     </div>
 
-    <!-- MODAL BITÁCORA / NOTAS DE SEGUIMIENTO -->
+    <!-- MODAL EDITAR DATOS DEL LEAD -->
+    <div id="edit-lead-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-2xl border border-slate-200 space-y-4 my-8">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-blue-50 text-blue-900 rounded-xl">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800">Editar Registro del Lead</h3>
+                        <p class="text-[10px] text-slate-400">Modifica los datos del prospecto en Supabase</p>
+                    </div>
+                </div>
+                <button onclick="closeEditLeadModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="edit-lead-form" onsubmit="saveEditedLead(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <input type="hidden" id="edit-lead-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Fecha</label>
+                    <input type="date" id="edit-lead-fecha" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nombres Estudiante</label>
+                    <input type="text" id="edit-lead-nombre" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Cédula</label>
+                    <input type="text" id="edit-lead-cedula" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Teléfono</label>
+                    <input type="text" id="edit-lead-telefono" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Correo Electrónico</label>
+                    <input type="email" id="edit-lead-correo" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Carrera</label>
+                    <input type="text" id="edit-lead-carrera" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tipo de Oferta</label>
+                    <select id="edit-lead-tipo" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                        <option value="TEC">Tecnología Superior (TEC)</option>
+                        <option value="MEL">Grado / Licenciatura (MEL)</option>
+                        <option value="POS">Posgrado / Maestría (POS)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Promotor / Asesor</label>
+                    <input type="text" id="edit-lead-promotor" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                </div>
+                <div class="sm:col-span-2 bg-rose-50 border border-rose-200 p-3 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="siren" class="w-4 h-4 text-rose-600"></i>
+                        <span class="text-xs font-bold text-rose-900">¿Estado URGENTE?</span>
+                    </div>
+                    <input type="checkbox" id="edit-lead-urgente" class="w-4 h-4 accent-rose-600 rounded cursor-pointer">
+                </div>
+                <div class="sm:col-span-2 flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeEditLeadModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs shadow-md">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL BITÁCORA / NOTAS DE SEGUIMIENTO (EDITABLES & ELIMINABLES) -->
     <div id="bitacora-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-md border border-slate-200 space-y-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-lg border border-slate-200 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
                     <div class="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
@@ -397,15 +488,18 @@
             </div>
 
             <!-- Listado de notas previo -->
-            <div id="bitacora-list" class="max-h-48 overflow-y-auto space-y-2 pr-1">
+            <div id="bitacora-list" class="max-h-56 overflow-y-auto space-y-2 pr-1">
                 <p class="text-xs text-slate-400 text-center py-4">Sin notas previas.</p>
             </div>
 
-            <!-- Agregar Nueva Nota -->
+            <!-- Agregar / Editar Nota -->
             <div class="space-y-2 pt-2 border-t border-slate-100">
-                <label class="block text-xs font-bold uppercase text-slate-600">Añadir Nueva Observación</label>
-                <textarea id="bitacora-input" rows="3" placeholder="Escribe detalles del avance..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-600"></textarea>
-                <button onclick="addBitacoraNote()" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold uppercase text-slate-600" id="bitacora-input-label">Añadir Nueva Observación</label>
+                    <button id="btn-cancel-edit-note" onclick="cancelBitacoraNoteEdit()" class="hidden text-[10px] text-rose-600 font-bold hover:underline">Cancelar Edición</button>
+                </div>
+                <textarea id="bitacora-input" rows="3" placeholder="Escribe detalles del avance con este prospecto..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-600"></textarea>
+                <button id="btn-save-note" onclick="addBitacoraNote()" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
                     <i data-lucide="save" class="w-4 h-4"></i> Guardar Comentario
                 </button>
             </div>
@@ -464,43 +558,90 @@
                 </button>
             </div>
 
-            <form onsubmit="createUserInSupabase(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div class="sm:col-span-2">
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Nombre Completo</label>
-                    <input type="text" id="new-user-name" required placeholder="Ej. Juan Pérez" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
+            <form onsubmit="createUserInSupabase(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nombre Completo</label>
+                    <input type="text" id="new-user-name" required placeholder="Ej. Juan Pérez" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Usuario Login</label>
-                    <input type="text" id="new-user-username" required placeholder="ej. oper1" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usuario</label>
+                    <input type="text" id="new-user-username" required placeholder="Ej. juanp" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Contraseña Inicial</label>
-                    <input type="password" id="new-user-password" required placeholder="••••••••" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Contraseña</label>
+                    <input type="password" id="new-user-password" required minlength="4" placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
                 </div>
-                <div class="sm:col-span-2">
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Rol de Acceso</label>
-                    <select id="new-user-role" required class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
-                        <option value="CARGA">CARGA (Operador / Promotor)</option>
-                        <option value="VISOR">VISOR (Consulta & Excel)</option>
-                        <option value="SUPER_ADMIN">SUPER_ADMIN (Acceso Total)</option>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Rol / Permisos</label>
+                    <select id="new-user-role" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
+                        <option value="CARGA">Operador (Ingreso de Datos)</option>
+                        <option value="VISOR">Visualizador (Reportes)</option>
+                        <option value="SUPER_ADMIN">Super Administrador</option>
                     </select>
                 </div>
-                <div class="sm:col-span-2">
-                    <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 rounded-xl text-xs transition-all shadow-sm">
-                        Registrar Usuario en Supabase
+                <div class="sm:col-span-2 pt-2">
+                    <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md">
+                        Crear Nuevo Usuario
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- TOAST NOTIFICATIONS CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MODAL CONFIRMACIÓN ELIMINAR -->
+    <div id="delete-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm border border-slate-200 text-center space-y-4">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-extrabold text-slate-800">¿Eliminar este registro?</h3>
+                <p class="text-xs text-slate-500 mt-1">Esta acción eliminará el lead permanentemente de Supabase.</p>
+            </div>
+            <div class="flex items-center gap-2 pt-2">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-all">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-delete" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-sm">
+                    Sí, Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- LÓGICA JAVASCRIPT PRINCIPAL -->
     <script>
-        // Configuración de Supabase proporcionada por el usuario
+        // Configuración de Supabase
         const SUPABASE_URL = 'https://hjlsudhspfbwoualdkea.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_8jqhwZkSvDjk3GT9ln7CWw_frhhM7xo';
         
         let supabaseClient = null;
+        let pendingDeleteId = null;
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                warning: 'bg-amber-500 text-slate-950',
+                info: 'bg-blue-900 text-white'
+            };
+            toast.className = `px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2 border border-white/20 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
 
         function initSupabase() {
             if (window.supabase && typeof window.supabase.createClient === 'function') {
@@ -515,7 +656,7 @@
         }
         initSupabase();
 
-        // Helper seguro para renderizar iconos Lucide sin lanzar ReferenceError
+        // Helper seguro para renderizar iconos Lucide
         function safeCreateIcons() {
             if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
                 lucide.createIcons();
@@ -530,11 +671,15 @@
         let tipoChartInstance = null;
         let carrerasFullChartInstance = null;
         let tipoFullChartInstance = null;
+        
         let activeLeadIdForBitacora = null;
+        let editingNoteIndex = null;
         let filterOnlyUrgentes = false;
+        let filterOnlyMine = false;
+        let statsScope = 'all'; // 'all' o 'mine'
         let activeView = 'dashboard';
 
-        // Interceptar errores de WebSockets en entornos sandbox
+        // Intercepta errores de WebSockets en sandbox
         window.addEventListener('error', function(e) {
             if (e.message && e.message.includes('WebSocket')) {
                 e.preventDefault();
@@ -553,7 +698,7 @@
                 showApp();
             }
 
-            // Fallback de sincronización periódica HTTP (cada 10 segundos)
+            // Sincronización periódica HTTP (cada 10 segundos)
             setInterval(() => {
                 if (currentUser && supabaseClient) {
                     fetchLeadsFromSupabase(false);
@@ -561,23 +706,20 @@
             }, 10000);
         });
 
-        // --- NAVEGACIÓN Y CAMBIO DE VISTAS TIPO SPA ---
+        // --- NAVEGACIÓN Y CAMBIO DE VISTAS ---
         function switchView(viewName) {
             activeView = viewName;
             closeSidebar();
 
-            // Ocultar todas las páginas
             document.querySelectorAll('.app-view-page').forEach(page => {
                 page.classList.add('hidden');
             });
 
-            // Mostrar página seleccionada
             const targetPage = document.getElementById(`view-${viewName}`);
             if (targetPage) {
                 targetPage.classList.remove('hidden');
             }
 
-            // Si es urgentes, cambiar la vista a listado con filtro urgente activo
             if (viewName === 'urgentes') {
                 filterOnlyUrgentes = true;
                 const btn = document.getElementById('btn-filter-urgente');
@@ -619,7 +761,6 @@
 
             if (!supabaseClient) initSupabase();
 
-            // 1. Caso especial por defecto
             if (u === 'admin' && p === 'admin') {
                 currentUser = { username: 'admin', name: 'Super Administrador UTPL', role: 'SUPER_ADMIN' };
                 sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
@@ -628,7 +769,6 @@
                 return;
             }
 
-            // 2. Consulta en Supabase
             try {
                 const { data, error } = await supabaseClient
                     .from('app_users')
@@ -665,6 +805,12 @@
             document.getElementById('sidebar-user-role').textContent = currentUser.role;
             document.getElementById('sidebar-user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
 
+            // Prellenar campo promotor en formulario si es operador
+            const promotorInput = document.getElementById('lead-promotor');
+            if (promotorInput && currentUser.role === 'CARGA') {
+                promotorInput.value = currentUser.name;
+            }
+
             setupRoleInterface(currentUser.role);
             fetchLeadsFromSupabase();
         }
@@ -678,15 +824,17 @@
             const bannerSub = document.getElementById('role-banner-subtitle');
             const bannerIcon = document.getElementById('role-banner-icon');
             const bannerPills = document.getElementById('role-quick-pills');
+            const statsScopeSelector = document.getElementById('stats-scope-selector');
 
             if (role === 'SUPER_ADMIN') {
                 btnExcel.classList.remove('hidden');
                 btnUsers.classList.remove('hidden');
+                if (statsScopeSelector) statsScopeSelector.classList.remove('hidden');
 
                 banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
                 bannerIcon.innerHTML = `<i data-lucide="shield-check" class="w-6 h-6 text-amber-400"></i>`;
                 bannerTitle.innerHTML = `Centro de Control Administrador <span class="bg-amber-400 text-blue-950 text-[10px] px-2 py-0.5 rounded-full font-bold">ACCESO TOTAL</span>`;
-                bannerSub.textContent = "Supervisión general, analítica en tiempo real, gestión de usuarios y control de leads.";
+                bannerSub.textContent = "Supervisión general, analítica en tiempo real, edición de registros y gestión de promotores.";
 
                 bannerPills.innerHTML = `
                     <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20">
@@ -726,43 +874,48 @@
             } else if (role === 'CARGA') { // OPERADOR / PROMOTOR
                 btnExcel.classList.add('hidden');
                 btnUsers.classList.add('hidden');
+                if (statsScopeSelector) statsScopeSelector.classList.remove('hidden');
 
                 banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
                 bannerIcon.innerHTML = `<i data-lucide="pen-tool" class="w-6 h-6 text-blue-300"></i>`;
-                bannerTitle.innerHTML = `Panel de Operación y Registro <span class="bg-blue-700 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">OPERADOR</span>`;
-                bannerSub.textContent = "Ingresa nuevos prospectos, marca casos urgentes y gestiona notas en la bitácora.";
+                bannerTitle.innerHTML = `Panel de Promotor <span class="bg-blue-700 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">${currentUser.name}</span>`;
+                bannerSub.textContent = "Ingresa nuevos prospectos, edita tus registros, añade bitácoras y monitorea tu rendimiento personal.";
 
                 bannerPills.innerHTML = `
                     <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 rounded-xl text-xs font-bold transition-all shadow-sm">
                         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Registrar Lead
                     </button>
-                    <button onclick="switchView('urgentes')" class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
-                        <i data-lucide="siren" class="w-3.5 h-3.5"></i> Urgentes
+                    <button onclick="switchView('dashboard'); setStatsScope('mine');" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20">
+                        <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-300"></i> Mis Estadísticas
                     </button>
                 `;
 
                 navLinks.innerHTML = `
+                    <button onclick="switchView('dashboard')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i> Mi Dashboard & Estadísticas
+                    </button>
                     <button onclick="switchView('form')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-blue-900 hover:text-amber-200 transition-all">
                         <i data-lucide="user-plus" class="w-4 h-4"></i> Formulario de Carga
                     </button>
                     <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
-                        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Listado & Bitácora
+                        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Listado & Edición Leads
                     </button>
                     <button onclick="switchView('urgentes')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/50 hover:text-white transition-all">
                         <i data-lucide="siren" class="w-4 h-4 text-rose-400"></i> Marcar / Ver Urgentes
                     </button>
                 `;
 
-                document.getElementById('sidebar-role-description').textContent = 'Operador de Carga & Bitácora';
-                if (activeView === 'dashboard') switchView('form');
+                document.getElementById('sidebar-role-description').textContent = 'Operador / Promotor de Carga';
+                if (activeView === 'dashboard') setStatsScope('mine');
 
             } else if (role === 'VISOR') { // VISUALIZADOR
                 btnExcel.classList.remove('hidden');
                 btnUsers.classList.add('hidden');
+                if (statsScopeSelector) statsScopeSelector.classList.add('hidden');
 
                 banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-emerald-950 via-teal-900 to-blue-950 border border-teal-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
                 bannerIcon.innerHTML = `<i data-lucide="file-spreadsheet" class="w-6 h-6 text-emerald-300"></i>`;
-                bannerTitle.innerHTML = `Panel Ejecutivo de Consulta y Registros <span class="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">VISUALIZADOR</span>`;
+                bannerTitle.innerHTML = `Panel Ejecutivo de Consulta <span class="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">VISUALIZADOR</span>`;
                 bannerSub.textContent = "Consulta general de estudiantes, cuadro de crecimiento diario y descarga de reportes.";
 
                 bannerPills.innerHTML = `
@@ -788,6 +941,22 @@
             }
 
             safeCreateIcons();
+        }
+
+        // --- GESTIÓN DE ÁMBITO DE ESTADÍSTICAS (TODOS VS MIS LEADS) ---
+        function setStatsScope(scope) {
+            statsScope = scope;
+            const btnAll = document.getElementById('btn-scope-all');
+            const btnMine = document.getElementById('btn-scope-mine');
+
+            if (scope === 'mine') {
+                if (btnMine) btnMine.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-blue-900 text-white shadow-sm";
+                if (btnAll) btnAll.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-blue-950";
+            } else {
+                if (btnAll) btnAll.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all bg-white text-blue-950 shadow-sm";
+                if (btnMine) btnMine.className = "px-3 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-blue-950";
+            }
+            renderDashboardData();
         }
 
         // --- GESTIÓN DE CAMBIO DE CONTRASEÑA ---
@@ -817,20 +986,22 @@
 
             try {
                 if (currentUser.username !== 'admin') {
-                    await supabaseClient
+                    const { error } = await supabaseClient
                         .from('app_users')
                         .update({ password: p1 })
                         .eq('username', currentUser.username);
+
+                    if (error) throw error;
                 }
                 closePasswordModal();
-                alert('Contraseña actualizada correctamente.');
+                showToast('Contraseña actualizada correctamente.', 'success');
             } catch (error) {
                 console.error(error);
-                alert('Error al guardar la contraseña.');
+                showToast('Error al actualizar la contraseña: ' + (error.message || 'Error en BD'), 'error');
             }
         }
 
-        // --- GESTIÓN DE USUARIOS POR PARTE DEL SUPER_ADMIN ---
+        // --- GESTIÓN DE USUARIOS (SUPER_ADMIN) ---
         function openUserModal() {
             document.getElementById('user-modal').classList.remove('hidden');
             safeCreateIcons();
@@ -854,11 +1025,11 @@
 
                 if (error) throw error;
 
-                alert(`Usuario ${username} creado con éxito.`);
+                showToast(`Usuario ${username} creado con éxito.`, 'success');
                 closeUserModal();
             } catch (err) {
                 console.error(err);
-                alert('Error creando usuario. Es posible que el nombre de usuario ya exista.');
+                showToast('Error creando usuario: ' + (err.message || 'Nombre de usuario ya existe.'), 'error');
             }
         }
 
@@ -889,7 +1060,7 @@
             safeCreateIcons();
         }
 
-        // --- OPERACIONES DE REGISTRO DE LEADS ---
+        // --- OPERACIONES DE REGISTRO Y EDICIÓN DE LEADS ---
         async function saveLead(e) {
             e.preventDefault();
             if (!supabaseClient) initSupabase();
@@ -908,11 +1079,16 @@
             };
 
             try {
-                const { error } = await supabaseClient
+                const { data, error } = await supabaseClient
                     .from('leads')
-                    .insert([newLead]);
+                    .insert([newLead])
+                    .select();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Detalle error Supabase:', error);
+                    showToast('Error de Supabase: ' + (error.message || error.details || 'Columna no encontrada'), 'error');
+                    return;
+                }
 
                 // Limpiar inputs
                 document.getElementById('lead-nombre').value = '';
@@ -920,15 +1096,76 @@
                 document.getElementById('lead-telefono').value = '';
                 document.getElementById('lead-correo').value = '';
                 document.getElementById('lead-carrera').value = '';
-                document.getElementById('lead-promotor').value = '';
+                if (currentUser.role !== 'CARGA') {
+                    document.getElementById('lead-promotor').value = '';
+                }
                 document.getElementById('lead-urgente').checked = false;
                 document.getElementById('cedula-warning').classList.add('hidden');
 
+                showToast('Lead guardado exitosamente en Supabase', 'success');
                 await fetchLeadsFromSupabase();
                 switchView('leads');
             } catch (err) {
                 console.error(err);
-                alert('Error al guardar el lead en Supabase.');
+                showToast('Error inesperado al guardar el lead.', 'error');
+            }
+        }
+
+        // --- EDICIÓN DE LEADS (MODAL) ---
+        function openEditLeadModal(id) {
+            const lead = leadsData.find(l => l.id === id);
+            if (!lead) return;
+
+            document.getElementById('edit-lead-id').value = lead.id;
+            document.getElementById('edit-lead-fecha').value = lead.fecha || '';
+            document.getElementById('edit-lead-nombre').value = lead.nombre || '';
+            document.getElementById('edit-lead-cedula').value = lead.cedula || '';
+            document.getElementById('edit-lead-telefono').value = lead.telefono || '';
+            document.getElementById('edit-lead-correo').value = lead.correo || '';
+            document.getElementById('edit-lead-carrera').value = lead.carrera || '';
+            document.getElementById('edit-lead-tipo').value = lead.tipo || 'TEC';
+            document.getElementById('edit-lead-promotor').value = lead.promotor || '';
+            document.getElementById('edit-lead-urgente').checked = !!lead.urgente;
+
+            document.getElementById('edit-lead-modal').classList.remove('hidden');
+            safeCreateIcons();
+        }
+
+        function closeEditLeadModal() {
+            document.getElementById('edit-lead-modal').classList.add('hidden');
+        }
+
+        async function saveEditedLead(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-lead-id').value;
+            if (!id || !supabaseClient) return;
+
+            const updatedLead = {
+                fecha: document.getElementById('edit-lead-fecha').value,
+                nombre: document.getElementById('edit-lead-nombre').value.trim(),
+                cedula: document.getElementById('edit-lead-cedula').value.trim(),
+                telefono: document.getElementById('edit-lead-telefono').value.trim(),
+                correo: document.getElementById('edit-lead-correo').value.trim(),
+                carrera: document.getElementById('edit-lead-carrera').value.trim(),
+                tipo: document.getElementById('edit-lead-tipo').value,
+                promotor: document.getElementById('edit-lead-promotor').value.trim(),
+                urgente: document.getElementById('edit-lead-urgente').checked
+            };
+
+            try {
+                const { error } = await supabaseClient
+                    .from('leads')
+                    .update(updatedLead)
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showToast('Datos del lead actualizados en Supabase', 'success');
+                closeEditLeadModal();
+                fetchLeadsFromSupabase(false);
+            } catch (err) {
+                console.error(err);
+                showToast('Error al actualizar lead: ' + (err.message || 'Error en BD'), 'error');
             }
         }
 
@@ -944,48 +1181,93 @@
 
         async function toggleUrgente(id, currentVal) {
             try {
-                await supabaseClient
+                const { error } = await supabaseClient
                     .from('leads')
                     .update({ urgente: !currentVal })
                     .eq('id', id);
 
+                if (error) throw error;
+
+                showToast(`Lead marcado como ${!currentVal ? 'URGENTE 🚨' : 'Normal'}`, 'info');
                 fetchLeadsFromSupabase(false);
             } catch (err) {
                 console.error(err);
+                showToast('Error al actualizar urgencia: ' + (err.message || 'Revisa la tabla'), 'error');
             }
         }
 
-        async function deleteLead(id) {
-            if (confirm('¿Desea eliminar definitivamente este registro de lead?')) {
+        function deleteLead(id) {
+            pendingDeleteId = id;
+            const modal = document.getElementById('delete-modal');
+            const btnConfirm = document.getElementById('btn-confirm-delete');
+            
+            btnConfirm.onclick = async () => {
+                if (!pendingDeleteId) return;
                 try {
-                    await supabaseClient
+                    const { error } = await supabaseClient
                         .from('leads')
                         .delete()
-                        .eq('id', id);
+                        .eq('id', pendingDeleteId);
 
+                    if (error) throw error;
+
+                    showToast('Registro eliminado de Supabase', 'success');
+                    closeDeleteModal();
                     fetchLeadsFromSupabase();
                 } catch (err) {
                     console.error(err);
+                    showToast('Error al eliminar: ' + (err.message || 'Error en BD'), 'error');
                 }
-            }
+            };
+
+            modal.classList.remove('hidden');
+            safeCreateIcons();
         }
 
-        // --- BITÁCORA / COMENTARIOS ---
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            pendingDeleteId = null;
+        }
+
+        // --- BITÁCORA / COMENTARIOS (AÑADIR, EDITAR Y ELIMINAR OBSERVACIONES) ---
         function openBitacoraModal(id, nombre) {
             activeLeadIdForBitacora = id;
+            editingNoteIndex = null;
             document.getElementById('bitacora-student-name').textContent = nombre;
             document.getElementById('bitacora-modal').classList.remove('hidden');
+            document.getElementById('bitacora-input').value = '';
+            document.getElementById('bitacora-input-label').textContent = 'Añadir Nueva Observación';
+            document.getElementById('btn-cancel-edit-note').classList.add('hidden');
             
-            const lead = leadsData.find(l => l.id === id);
+            renderBitacoraList();
+            safeCreateIcons();
+        }
+
+        function closeBitacoraModal() {
+            document.getElementById('bitacora-modal').classList.add('hidden');
+            activeLeadIdForBitacora = null;
+            editingNoteIndex = null;
+        }
+
+        function renderBitacoraList() {
+            const lead = leadsData.find(l => l.id === activeLeadIdForBitacora);
             const list = document.getElementById('bitacora-list');
             list.innerHTML = '';
 
-            if (lead && lead.observaciones) {
+            if (lead && lead.observaciones && lead.observaciones.trim() !== '') {
                 const notes = lead.observaciones.split('\n').filter(n => n.trim() !== '');
-                notes.forEach(note => {
+                notes.forEach((note, idx) => {
                     list.innerHTML += `
-                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
-                            ${note}
+                        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 flex items-start justify-between gap-2 group hover:border-indigo-200 transition-all">
+                            <div class="flex-1 break-words">${note}</div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="startEditBitacoraNote(${idx})" class="p-1 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Editar Nota">
+                                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="deleteBitacoraNote(${idx})" class="p-1 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Eliminar Nota">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
@@ -995,9 +1277,24 @@
             safeCreateIcons();
         }
 
-        function closeBitacoraModal() {
-            document.getElementById('bitacora-modal').classList.add('hidden');
-            activeLeadIdForBitacora = null;
+        function startEditBitacoraNote(index) {
+            const lead = leadsData.find(l => l.id === activeLeadIdForBitacora);
+            if (!lead || !lead.observaciones) return;
+
+            const notes = lead.observaciones.split('\n').filter(n => n.trim() !== '');
+            if (!notes[index]) return;
+
+            editingNoteIndex = index;
+            document.getElementById('bitacora-input').value = notes[index];
+            document.getElementById('bitacora-input-label').textContent = `Editando Observación #${index + 1}`;
+            document.getElementById('btn-cancel-edit-note').classList.remove('hidden');
+        }
+
+        function cancelBitacoraNoteEdit() {
+            editingNoteIndex = null;
+            document.getElementById('bitacora-input').value = '';
+            document.getElementById('bitacora-input-label').textContent = 'Añadir Nueva Observación';
+            document.getElementById('btn-cancel-edit-note').classList.add('hidden');
         }
 
         async function addBitacoraNote() {
@@ -1006,22 +1303,65 @@
             if (!text || !activeLeadIdForBitacora) return;
 
             const lead = leadsData.find(l => l.id === activeLeadIdForBitacora);
-            const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const newNote = `[${now} - ${currentUser.name}]: ${text}`;
-            
-            const updatedObs = lead.observaciones ? `${lead.observaciones}\n${newNote}` : newNote;
+            if (!lead) return;
+
+            let notes = lead.observaciones ? lead.observaciones.split('\n').filter(n => n.trim() !== '') : [];
+
+            if (editingNoteIndex !== null) {
+                // Modificar nota existente
+                notes[editingNoteIndex] = text;
+                showToast('Observación editada correctamente', 'success');
+            } else {
+                // Crear nueva nota
+                const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const newNote = `[${now} - ${currentUser.name}]: ${text}`;
+                notes.push(newNote);
+                showToast('Nueva observación añadida', 'success');
+            }
+
+            const updatedObs = notes.join('\n');
 
             try {
-                await supabaseClient
+                const { error } = await supabaseClient
                     .from('leads')
                     .update({ observaciones: updatedObs })
                     .eq('id', activeLeadIdForBitacora);
 
-                input.value = '';
-                openBitacoraModal(activeLeadIdForBitacora, lead.nombre);
+                if (error) throw error;
+
+                lead.observaciones = updatedObs;
+                cancelBitacoraNoteEdit();
+                renderBitacoraList();
                 fetchLeadsFromSupabase(false);
             } catch (err) {
                 console.error(err);
+                showToast('Error al guardar observación', 'error');
+            }
+        }
+
+        async function deleteBitacoraNote(index) {
+            const lead = leadsData.find(l => l.id === activeLeadIdForBitacora);
+            if (!lead || !lead.observaciones) return;
+
+            let notes = lead.observaciones.split('\n').filter(n => n.trim() !== '');
+            notes.splice(index, 1);
+            const updatedObs = notes.join('\n');
+
+            try {
+                const { error } = await supabaseClient
+                    .from('leads')
+                    .update({ observaciones: updatedObs })
+                    .eq('id', activeLeadIdForBitacora);
+
+                if (error) throw error;
+
+                lead.observaciones = updatedObs;
+                showToast('Observación eliminada de la bitácora', 'info');
+                renderBitacoraList();
+                fetchLeadsFromSupabase(false);
+            } catch (err) {
+                console.error(err);
+                showToast('Error al eliminar observación', 'error');
             }
         }
 
@@ -1030,15 +1370,28 @@
             const container = document.getElementById('stats-summary');
             if (!container) return;
 
-            const total = leadsData.length;
-            const tec = leadsData.filter(l => l.tipo === 'TEC').length;
-            const mel = leadsData.filter(l => l.tipo === 'MEL').length;
-            const pos = leadsData.filter(l => l.tipo === 'POS').length;
-            const urgentes = leadsData.filter(l => l.urgente).length;
+            // Filtrado según ámbito seleccionado (Global vs Mis Leads)
+            let dataset = leadsData;
+            const isMineScope = statsScope === 'mine' || (currentUser && currentUser.role === 'CARGA' && statsScope === 'mine');
+
+            if (isMineScope && currentUser) {
+                dataset = leadsData.filter(l => l.promotor && 
+                    (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || 
+                     l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))
+                );
+            }
+
+            const total = dataset.length;
+            const tec = dataset.filter(l => l.tipo === 'TEC').length;
+            const mel = dataset.filter(l => l.tipo === 'MEL').length;
+            const pos = dataset.filter(l => l.tipo === 'POS').length;
+            const urgentes = dataset.filter(l => l.urgente).length;
+
+            const scopeTitle = isMineScope ? `MIS LEADS (${currentUser.name})` : 'TOTAL LEADS GLOBAL';
 
             container.innerHTML = `
                 <div onclick="switchView('leads')" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all">
-                    <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Total Leads</p><h3 class="text-xl font-black text-slate-800">${total}</h3></div>
+                    <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">${scopeTitle}</p><h3 class="text-xl font-black text-slate-800">${total}</h3></div>
                     <div class="p-2.5 bg-blue-50 text-blue-900 rounded-xl"><i data-lucide="users" class="w-5 h-5"></i></div>
                 </div>
                 <div onclick="switchView('urgentes')" class="bg-rose-50 p-3.5 rounded-2xl border border-rose-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-rose-400 transition-all animate-pulse-subtle">
@@ -1061,9 +1414,16 @@
         }
 
         function renderCharts() {
-            // Conteo carreras
+            let dataset = leadsData;
+            if (statsScope === 'mine' && currentUser) {
+                dataset = leadsData.filter(l => l.promotor && 
+                    (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || 
+                     l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))
+                );
+            }
+
             const carrerasMap = {};
-            leadsData.forEach(l => {
+            dataset.forEach(l => {
                 if (l.carrera) {
                     const c = l.carrera.trim();
                     carrerasMap[c] = (carrerasMap[c] || 0) + 1;
@@ -1106,9 +1466,9 @@
                         labels: ['TEC', 'MEL', 'POS'],
                         datasets: [{
                             data: [
-                                leadsData.filter(l => l.tipo === 'TEC').length,
-                                leadsData.filter(l => l.tipo === 'MEL').length,
-                                leadsData.filter(l => l.tipo === 'POS').length
+                                dataset.filter(l => l.tipo === 'TEC').length,
+                                dataset.filter(l => l.tipo === 'MEL').length,
+                                dataset.filter(l => l.tipo === 'POS').length
                             ],
                             backgroundColor: ['#2563eb', '#d97706', '#9333ea']
                         }]
@@ -1209,6 +1569,17 @@
             renderTable();
         }
 
+        function toggleFilterOnlyMine() {
+            filterOnlyMine = !filterOnlyMine;
+            const btn = document.getElementById('btn-filter-mine');
+            if (filterOnlyMine) {
+                btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-blue-900 text-white border-blue-950 shadow-md";
+            } else {
+                btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-50 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-900";
+            }
+            renderTable();
+        }
+
         function renderTable() {
             const tbody = document.getElementById('leads-table-body');
             if (!tbody) return;
@@ -1220,9 +1591,11 @@
             let filtered = leadsData.filter(l => {
                 const matchSearch = l.nombre.toLowerCase().includes(search) || 
                                     (l.cedula && l.cedula.includes(search)) || 
-                                    (l.carrera && l.carrera.toLowerCase().includes(search));
+                                    (l.carrera && l.carrera.toLowerCase().includes(search)) ||
+                                    (l.promotor && l.promotor.toLowerCase().includes(search));
                 const matchUrgente = filterOnlyUrgentes ? l.urgente === true : true;
-                return matchSearch && matchUrgente;
+                const matchMine = filterOnlyMine && currentUser ? (l.promotor && (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))) : true;
+                return matchSearch && matchUrgente && matchMine;
             });
 
             if (filtered.length === 0) {
@@ -1242,6 +1615,9 @@
                 const waUrl = phoneClean ? `https://wa.me/593${phoneClean.startsWith('0') ? phoneClean.substring(1) : phoneClean}` : '#';
 
                 const rowBg = l.urgente ? 'bg-rose-50/50 hover:bg-rose-100/50 border-l-4 border-l-rose-600' : 'hover:bg-slate-50';
+
+                const canEdit = currentUser && (currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'CARGA');
+                const canDelete = currentUser && currentUser.role === 'SUPER_ADMIN';
 
                 const row = `
                     <tr class="${rowBg} transition-colors">
@@ -1263,18 +1639,25 @@
                         <td class="p-3">
                             <span class="px-2 py-0.5 rounded text-[9px] font-extrabold border uppercase ${badgeClass}">${l.tipo}</span>
                         </td>
-                        <td class="p-3 text-slate-600">${l.promotor}</td>
+                        <td class="p-3 text-slate-600 font-medium">${l.promotor}</td>
                         <td class="p-3 text-center">
                             <button onclick="openBitacoraModal('${l.id}', '${l.nombre.replace(/'/g, "\\'")}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-[10px] font-bold flex items-center gap-1 mx-auto transition-all">
                                 <i data-lucide="notebook" class="w-3 h-3"></i> Bitácora
                             </button>
                         </td>
                         <td class="p-3 text-center">
-                            ${currentUser && currentUser.role === 'SUPER_ADMIN' ? `
-                                <button onclick="deleteLead('${l.id}')" class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors" title="Eliminar Lead">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            ` : '<span class="text-slate-300">-</span>'}
+                            <div class="flex items-center justify-center gap-1">
+                                ${canEdit ? `
+                                    <button onclick="openEditLeadModal('${l.id}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors" title="Editar Lead">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                ` : ''}
+                                ${canDelete ? `
+                                    <button onclick="deleteLead('${l.id}')" class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors" title="Eliminar Lead">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
                         </td>
                     </tr>
                 `;
