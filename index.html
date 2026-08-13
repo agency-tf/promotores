@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UTPL Centro Manta - Sistema de Leads Supabase</title>
+
+    <!-- PWA & MOBILE META TAGS -->
+    <meta name="theme-color" content="#0c2340">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="UTPL Leads">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0c2340/fbbf24?text=UTPL">
+
+    <!-- INLINE PWA MANIFEST -->
+    <link rel="manifest" id="pwa-manifest">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -12,6 +24,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2pdf.js for Executive PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -23,6 +38,44 @@
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900 min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <script>
+        // Generar Manifest PWA dinámicamente
+        const manifestData = {
+            "name": "UTPL Manta - Leads System",
+            "short_name": "UTPL Leads",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#0c2340",
+            "theme_color": "#0c2340",
+            "description": "Sistema de Gestión y Control de Leads UTPL Centro Manta",
+            "icons": [
+                {
+                    "src": "https://placehold.co/192x192/0c2340/fbbf24?text=UTPL",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "https://placehold.co/512x512/0c2340/fbbf24?text=UTPL",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+        document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+        // Registrar Service Worker para instalación en móvil
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => self.skipWaiting());
+                self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+            `;
+            const swBlob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW Note:', err));
+        }
+    </script>
 
     <!-- PANTALLA DE LOGIN -->
     <div id="login-view" class="flex-1 flex items-center justify-center p-4 min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950">
@@ -40,7 +93,7 @@
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usuario</label>
                     <div class="relative">
                         <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="username" required placeholder="Ej: admin" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none text-xs font-semibold transition-all">
+                        <input type="text" id="username" required placeholder="Ej: jackson, madelen, admin" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none text-xs font-semibold transition-all">
                     </div>
                 </div>
 
@@ -61,8 +114,9 @@
                 </button>
             </form>
 
-            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
-                <span class="text-[11px] text-slate-400 font-medium">Credencial inicial: <b class="text-blue-900">admin / admin</b></span>
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center space-y-1">
+                <p class="text-[11px] text-slate-400 font-medium">Accesos Promotores: <b class="text-blue-900">jackson / jackson123</b> | <b class="text-blue-900">madelen / madelen123</b></p>
+                <p class="text-[11px] text-slate-400 font-medium">Super Admin: <b class="text-blue-900">admin / admin</b></p>
             </div>
         </div>
     </div>
@@ -115,6 +169,9 @@
 
             <!-- Acciones Pie Sidebar -->
             <div class="p-4 border-t border-blue-900 space-y-2">
+                <button id="btn-pwa-install-sidebar" onclick="triggerPWAInstall()" class="hidden w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 transition-all">
+                    <i data-lucide="smartphone" class="w-4 h-4 text-amber-400"></i> Instalar en Celular
+                </button>
                 <button onclick="openPasswordModal(); closeSidebar();" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-blue-200 hover:bg-blue-900 hover:text-white transition-all">
                     <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i> Cambiar Contraseña
                 </button>
@@ -141,6 +198,12 @@
 
                 <!-- Indicador de conexión / Acciones -->
                 <div class="flex items-center gap-2">
+                    <!-- Botón Instalar App Móvil PWA Header -->
+                    <button id="btn-pwa-install-header" onclick="triggerPWAInstall()" class="hidden items-center gap-1.5 bg-amber-400 text-blue-950 px-3 py-1.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                        <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Instalar App</span>
+                    </button>
+
                     <!-- Acceso directo Correo Interno en Header -->
                     <button onclick="switchView('mail')" class="relative p-2 text-blue-200 hover:text-white hover:bg-blue-800 rounded-xl transition-all flex items-center gap-1.5 bg-blue-950/40 border border-blue-800/80" title="Correo Interno UTPL">
                         <i data-lucide="mail" class="w-5 h-5 text-amber-400"></i>
@@ -150,23 +213,26 @@
                         </span>
                     </button>
 
-                    <span class="hidden md:flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Supabase Online
-                    </span>
-                    <button id="btn-manage-users" onclick="openUserModal()" class="hidden flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
-                        <i data-lucide="users" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Gestión Usuarios</span>
+                    <button id="btn-export-pdf" onclick="exportToPDF()" class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Reporte PDF</span>
                     </button>
+
                     <button id="btn-export-excel" onclick="exportToExcel()" class="hidden flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
                         <i data-lucide="download" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Exportar Excel</span>
+                        <span class="hidden sm:inline">Excel</span>
+                    </button>
+
+                    <button id="btn-manage-users" onclick="openUserModal()" class="hidden flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Usuarios</span>
                     </button>
                 </div>
             </div>
         </header>
 
         <!-- MAIN CONTENT AREA -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full" id="pdf-export-area">
 
             <!-- BANNER BIENVENIDA Y ROL -->
             <div id="role-welcome-banner" class="rounded-2xl p-4 sm:p-5 text-white shadow-md transition-all">
@@ -275,8 +341,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Promotor / Asesor</label>
-                            <input type="text" id="lead-promotor" required placeholder="Nombre del promotor" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Promotor / Asesor (Automático)</label>
+                            <input type="text" id="lead-promotor" required readonly class="w-full p-2.5 bg-slate-200 text-slate-700 font-bold border border-slate-300 rounded-xl text-xs outline-none cursor-not-allowed">
                         </div>
 
                         <!-- Checkbox URGENTE -->
@@ -315,7 +381,7 @@
                         <!-- Búsqueda por palabra clave -->
                         <div class="relative w-full lg:w-72">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                            <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar nombre, cédula, promotor..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                            <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar nombre, cédula, carrera..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
                         </div>
                     </div>
 
@@ -361,9 +427,6 @@
                             </div>
                             <div class="flex items-end sm:col-span-2">
                                 <div class="flex items-center gap-1.5 w-full">
-                                    <button id="btn-filter-mine" onclick="toggleFilterOnlyMine()" class="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-900">
-                                        <i data-lucide="user" class="w-3.5 h-3.5 text-blue-900"></i> Solo Mis Leads
-                                    </button>
                                     <button id="btn-filter-urgente" onclick="toggleFilterUrgentes()" class="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700">
                                         <i data-lucide="siren" class="w-3.5 h-3.5 text-rose-600"></i> Solo Urgentes
                                     </button>
@@ -573,7 +636,7 @@
         </main>
     </div>
 
-    <!-- MODAL EDITAR DATOS DEL LEAD -->
+    <!-- MODAL EDITAR DATOS DEL LEAD (SOLO SUPER_ADMIN) -->
     <div id="edit-lead-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-2xl border border-slate-200 space-y-4 my-8">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -644,7 +707,7 @@
         </div>
     </div>
 
-    <!-- MODAL BITÁCORA / NOTAS DE SEGUIMIENTO (EDITABLES & ELIMINABLES) -->
+    <!-- MODAL BITÁCORA / NOTAS DE SEGUIMIENTO -->
     <div id="bitacora-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-lg border border-slate-200 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -736,11 +799,11 @@
             <form onsubmit="createUserInSupabase(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nombre Completo</label>
-                    <input type="text" id="new-user-name" required placeholder="Ej. Juan Pérez" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
+                    <input type="text" id="new-user-name" required placeholder="Ej. Jackson, Madelen" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usuario</label>
-                    <input type="text" id="new-user-username" required placeholder="Ej. juanp" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
+                    <input type="text" id="new-user-username" required placeholder="Ej. jackson" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-600">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Contraseña</label>
@@ -795,6 +858,7 @@
         
         let supabaseClient = null;
         let pendingDeleteId = null;
+        let deferredPWAInstallPrompt = null;
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -845,8 +909,8 @@
         let messagesData = [];
         let systemUsersList = [
             { username: 'admin', name: 'Super Administrador UTPL' },
-            { username: 'operador1', name: 'Operador Carga 1' },
-            { username: 'operador2', name: 'Operador Carga 2' },
+            { username: 'jackson', name: 'Jackson' },
+            { username: 'madelen', name: 'Madelen' },
             { username: 'visor1', name: 'Visualizador Manta 1' }
         ];
 
@@ -858,8 +922,7 @@
         let activeLeadIdForBitacora = null;
         let editingNoteIndex = null;
         let filterOnlyUrgentes = false;
-        let filterOnlyMine = false;
-        let statsScope = 'all'; // 'all' o 'mine'
+        let statsScope = 'mine'; // Default 'mine' for operators, 'all' for admin
         let activeView = 'dashboard';
 
         // Variables Filtro Rango de Fechas
@@ -870,6 +933,30 @@
         // Variables Correo Interno
         let currentMailTab = 'inbox'; // 'inbox', 'sent', 'compose'
         let activeMailDetail = null;
+
+        // Capturar evento de instalación de PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPWAInstallPrompt = e;
+            const btnHeader = document.getElementById('btn-pwa-install-header');
+            const btnSidebar = document.getElementById('btn-pwa-install-sidebar');
+            if (btnHeader) btnHeader.classList.remove('hidden');
+            if (btnSidebar) btnSidebar.classList.remove('hidden');
+        });
+
+        function triggerPWAInstall() {
+            if (deferredPWAInstallPrompt) {
+                deferredPWAInstallPrompt.prompt();
+                deferredPWAInstallPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('¡App instalada correctamente!', 'success');
+                    }
+                    deferredPWAInstallPrompt = null;
+                });
+            } else {
+                showToast('Para instalar en iPhone/Android: usa "Agregar a pantalla de inicio" desde tu navegador.', 'info');
+            }
+        }
 
         // Intercepta errores de WebSockets en sandbox
         window.addEventListener('error', function(e) {
@@ -952,14 +1039,32 @@
         // --- AUTENTICACIÓN Y ROLES ---
         async function handleLogin(e) {
             e.preventDefault();
-            const u = document.getElementById('username').value.trim();
+            const u = document.getElementById('username').value.trim().toLowerCase();
             const p = document.getElementById('password').value.trim();
             const errorDiv = document.getElementById('login-error');
 
             if (!supabaseClient) initSupabase();
 
+            // Credenciales para Super Admin
             if (u === 'admin' && p === 'admin') {
                 currentUser = { username: 'admin', name: 'Super Administrador UTPL', role: 'SUPER_ADMIN' };
+                sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
+                errorDiv.classList.add('hidden');
+                showApp();
+                return;
+            }
+
+            // Credenciales predeterminadas para Jackson y Madelen
+            if (u === 'jackson' && p === 'jackson123') {
+                currentUser = { username: 'jackson', name: 'Jackson', role: 'CARGA' };
+                sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
+                errorDiv.classList.add('hidden');
+                showApp();
+                return;
+            }
+
+            if (u === 'madelen' && p === 'madelen123') {
+                currentUser = { username: 'madelen', name: 'Madelen', role: 'CARGA' };
                 sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
                 errorDiv.classList.add('hidden');
                 showApp();
@@ -1002,10 +1107,14 @@
             document.getElementById('sidebar-user-role').textContent = currentUser.role;
             document.getElementById('sidebar-user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
 
-            // Prellenar campo promotor en formulario si es operador
+            // Asignación automática estricta del campo promotor si es operador/promotor
             const promotorInput = document.getElementById('lead-promotor');
-            if (promotorInput && currentUser.role === 'CARGA') {
-                promotorInput.value = currentUser.name;
+            if (promotorInput) {
+                if (currentUser.role === 'CARGA') {
+                    promotorInput.value = currentUser.name;
+                } else {
+                    promotorInput.value = currentUser.name;
+                }
             }
 
             setupRoleInterface(currentUser.role);
@@ -1033,7 +1142,7 @@
                 banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
                 bannerIcon.innerHTML = `<i data-lucide="shield-check" class="w-6 h-6 text-amber-400"></i>`;
                 bannerTitle.innerHTML = `Centro de Control Administrador <span class="bg-amber-400 text-blue-950 text-[10px] px-2 py-0.5 rounded-full font-bold">ACCESO TOTAL</span>`;
-                bannerSub.textContent = "Supervisión general, mensajería interna, analítica en tiempo real y gestión de usuarios.";
+                bannerSub.textContent = "Supervisión general de todos los promotores (Jackson, Madelen), reportes en PDF/Excel y gestión de usuarios.";
 
                 bannerPills.innerHTML = `
                     <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20">
@@ -1052,7 +1161,7 @@
                         <i data-lucide="user-plus" class="w-4 h-4 text-blue-400"></i> Registrar Nuevo Lead
                     </button>
                     <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
-                        <i data-lucide="list" class="w-4 h-4 text-indigo-400"></i> Listado & Registros
+                        <i data-lucide="list" class="w-4 h-4 text-indigo-400"></i> Listado Todos los Leads
                     </button>
                     <button onclick="switchView('mail')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
                         <div class="flex items-center gap-2.5">
@@ -1076,19 +1185,19 @@
 
                 document.getElementById('sidebar-role-description').textContent = 'Super Administrador de Sistema';
 
-            } else if (role === 'CARGA') { // OPERADOR / PROMOTOR
+            } else if (role === 'CARGA') { // OPERADOR / PROMOTOR (JACKSON / MADELEN)
                 btnExcel.classList.add('hidden');
                 btnUsers.classList.add('hidden');
-                if (statsScopeSelector) statsScopeSelector.classList.remove('hidden');
+                if (statsScopeSelector) statsScopeSelector.classList.add('hidden');
 
                 banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
-                bannerIcon.innerHTML = `<i data-lucide="pen-tool" class="w-6 h-6 text-blue-300"></i>`;
-                bannerTitle.innerHTML = `Panel de Promotor <span class="bg-blue-700 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">${currentUser.name}</span>`;
-                bannerSub.textContent = "Ingresa prospectos, gestiona bitácoras, envía mensajes al administrador y revisa tus avances.";
+                bannerIcon.innerHTML = `<i data-lucide="user-check" class="w-6 h-6 text-amber-300"></i>`;
+                bannerTitle.innerHTML = `Panel de Promotor Exclusivo: <span class="bg-amber-400 text-blue-950 text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase">${currentUser.name}</span>`;
+                bannerSub.textContent = "Tus registros se asignan de forma automática a tu usuario. Los datos registrados son de consulta única para ti.";
 
                 bannerPills.innerHTML = `
                     <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 rounded-xl text-xs font-bold transition-all shadow-sm">
-                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Registrar Lead
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Registrar Nuevo Lead
                     </button>
                     <button onclick="switchView('mail')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20">
                         <i data-lucide="mail" class="w-3.5 h-3.5 text-amber-300"></i> Enviar Mensaje
@@ -1097,13 +1206,13 @@
 
                 navLinks.innerHTML = `
                     <button onclick="switchView('dashboard')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i> Mi Dashboard & Estadísticas
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i> Mis Estadísticas (${currentUser.name})
                     </button>
                     <button onclick="switchView('form')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-blue-900 hover:text-amber-200 transition-all">
                         <i data-lucide="user-plus" class="w-4 h-4"></i> Formulario de Carga
                     </button>
                     <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
-                        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Listado & Edición Leads
+                        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Mis Leads Asignados
                     </button>
                     <button onclick="switchView('mail')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
                         <div class="flex items-center gap-2.5">
@@ -1111,13 +1220,10 @@
                         </div>
                         <span id="nav-unread-count" class="hidden bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full font-extrabold">0</span>
                     </button>
-                    <button onclick="switchView('urgentes')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/50 hover:text-white transition-all">
-                        <i data-lucide="siren" class="w-4 h-4 text-rose-400"></i> Marcar / Ver Urgentes
-                    </button>
                 `;
 
-                document.getElementById('sidebar-role-description').textContent = 'Operador / Promotor de Carga';
-                if (activeView === 'dashboard') setStatsScope('mine');
+                document.getElementById('sidebar-role-description').textContent = `Promotor/a: ${currentUser.name}`;
+                statsScope = 'mine';
 
             } else if (role === 'VISOR') { // VISUALIZADOR
                 btnExcel.classList.remove('hidden');
@@ -1254,7 +1360,7 @@
             });
         }
 
-        // --- MÓDULO CORREO INTERNO UTPL (ESTILO GMAIL) ---
+        // --- MÓDULO CORREO INTERNO UTPL ---
         async function fetchInternalMessages(showToastMsg = false) {
             if (!supabaseClient || !currentUser) return;
 
@@ -1498,7 +1604,7 @@
         async function createUserInSupabase(e) {
             e.preventDefault();
             const name = document.getElementById('new-user-name').value.trim();
-            const username = document.getElementById('new-user-username').value.trim();
+            const username = document.getElementById('new-user-username').value.trim().toLowerCase();
             const password = document.getElementById('new-user-password').value.trim();
             const role = document.getElementById('new-user-role').value;
 
@@ -1550,6 +1656,9 @@
             e.preventDefault();
             if (!supabaseClient) initSupabase();
 
+            // El promotor se asigna automáticamente al usuario logueado (Jackson / Madelen / Admin)
+            const assignedPromoter = currentUser ? currentUser.name : 'Promotor Centro Manta';
+
             const newLead = {
                 fecha: document.getElementById('lead-fecha').value,
                 nombre: document.getElementById('lead-nombre').value.trim(),
@@ -1558,7 +1667,7 @@
                 correo: document.getElementById('lead-correo').value.trim(),
                 carrera: document.getElementById('lead-carrera').value.trim(),
                 tipo: document.getElementById('lead-tipo').value,
-                promotor: document.getElementById('lead-promotor').value.trim(),
+                promotor: assignedPromoter,
                 urgente: document.getElementById('lead-urgente').checked,
                 observaciones: ''
             };
@@ -1581,13 +1690,10 @@
                 document.getElementById('lead-telefono').value = '';
                 document.getElementById('lead-correo').value = '';
                 document.getElementById('lead-carrera').value = '';
-                if (currentUser.role !== 'CARGA') {
-                    document.getElementById('lead-promotor').value = '';
-                }
                 document.getElementById('lead-urgente').checked = false;
                 document.getElementById('cedula-warning').classList.add('hidden');
 
-                showToast('Lead guardado exitosamente en Supabase', 'success');
+                showToast(`Lead guardado exitosamente asignado a ${assignedPromoter}`, 'success');
                 await fetchLeadsFromSupabase();
                 switchView('leads');
             } catch (err) {
@@ -1596,8 +1702,13 @@
             }
         }
 
-        // --- EDICIÓN DE LEADS (MODAL) ---
+        // --- EDICIÓN DE LEADS (RESERVADO EXCLUSIVAMENTE PARA SUPER_ADMIN) ---
         function openEditLeadModal(id) {
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+                showToast('Solo el Super Administrador puede editar los registros enviados.', 'warning');
+                return;
+            }
+
             const lead = leadsData.find(l => l.id === id);
             if (!lead) return;
 
@@ -1682,6 +1793,11 @@
         }
 
         function deleteLead(id) {
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+                showToast('Solo el Super Administrador tiene permiso para eliminar registros.', 'error');
+                return;
+            }
+
             pendingDeleteId = id;
             const modal = document.getElementById('delete-modal');
             const btnConfirm = document.getElementById('btn-confirm-delete');
@@ -1848,20 +1964,35 @@
             }
         }
 
-        // --- METRICAS Y DIBUJO DE CHART.JS ---
-        function renderStats() {
-            const container = document.getElementById('stats-summary');
-            if (!container) return;
+        // --- OBTENER LEADS RESTRINGIDOS POR USUARIO ---
+        function getUserFilteredDataset() {
+            if (!currentUser) return [];
 
-            let dataset = leadsData;
-            const isMineScope = statsScope === 'mine' || (currentUser && currentUser.role === 'CARGA' && statsScope === 'mine');
-
-            if (isMineScope && currentUser) {
-                dataset = leadsData.filter(l => l.promotor && 
+            // Si es Operador/Promotor (Jackson / Madelen), SOLO ve sus propios leads
+            if (currentUser.role === 'CARGA') {
+                return leadsData.filter(l => l.promotor && 
                     (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || 
                      l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))
                 );
             }
+
+            // Si es Super Admin o Visor, respeta el selector de ámbito
+            if (statsScope === 'mine') {
+                return leadsData.filter(l => l.promotor && 
+                    (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || 
+                     l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))
+                );
+            }
+
+            return leadsData;
+        }
+
+        // --- MÉTRICAS Y DIBUJO DE CHART.JS ---
+        function renderStats() {
+            const container = document.getElementById('stats-summary');
+            if (!container) return;
+
+            const dataset = getUserFilteredDataset();
 
             const total = dataset.length;
             const tec = dataset.filter(l => l.tipo === 'TEC').length;
@@ -1869,7 +2000,8 @@
             const pos = dataset.filter(l => l.tipo === 'POS').length;
             const urgentes = dataset.filter(l => l.urgente).length;
 
-            const scopeTitle = isMineScope ? `MIS LEADS (${currentUser.name})` : 'TOTAL LEADS GLOBAL';
+            const isMineScope = currentUser && currentUser.role === 'CARGA';
+            const scopeTitle = isMineScope ? `MIS LEADS (${currentUser.name})` : (statsScope === 'mine' ? `MIS LEADS (${currentUser.name})` : 'TOTAL LEADS GLOBAL');
 
             container.innerHTML = `
                 <div onclick="switchView('leads')" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all">
@@ -1896,13 +2028,7 @@
         }
 
         function renderCharts() {
-            let dataset = leadsData;
-            if (statsScope === 'mine' && currentUser) {
-                dataset = leadsData.filter(l => l.promotor && 
-                    (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || 
-                     l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))
-                );
-            }
+            const dataset = getUserFilteredDataset();
 
             const carrerasMap = {};
             dataset.forEach(l => {
@@ -1985,8 +2111,10 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            const dataset = getUserFilteredDataset();
+
             const countsByDate = {};
-            leadsData.forEach(l => {
+            dataset.forEach(l => {
                 if (l.fecha) countsByDate[l.fecha] = (countsByDate[l.fecha] || 0) + 1;
             });
 
@@ -2039,7 +2167,7 @@
             });
         }
 
-        // --- TABLA PRINCIPAL DE REGISTROS DE LEADS CON FILTROS AVANZADOS ---
+        // --- TABLA PRINCIPAL DE REGISTROS DE LEADS CON FILTROS Y RESTRICCIONES ---
         function toggleFilterUrgentes() {
             filterOnlyUrgentes = !filterOnlyUrgentes;
             const btn = document.getElementById('btn-filter-urgente');
@@ -2047,17 +2175,6 @@
                 btn.className = "flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-rose-600 text-white border-rose-700 shadow-md";
             } else {
                 btn.className = "flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700";
-            }
-            renderTable();
-        }
-
-        function toggleFilterOnlyMine() {
-            filterOnlyMine = !filterOnlyMine;
-            const btn = document.getElementById('btn-filter-mine');
-            if (filterOnlyMine) {
-                btn.className = "flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-blue-900 text-white border-blue-950 shadow-md";
-            } else {
-                btn.className = "flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-900";
             }
             renderTable();
         }
@@ -2070,7 +2187,9 @@
             const search = searchElem ? searchElem.value.toLowerCase() : '';
             tbody.innerHTML = '';
 
-            let filtered = leadsData.filter(l => {
+            const userDataset = getUserFilteredDataset();
+
+            let filtered = userDataset.filter(l => {
                 // Búsqueda por texto
                 const matchSearch = l.nombre.toLowerCase().includes(search) || 
                                     (l.cedula && l.cedula.includes(search)) || 
@@ -2079,9 +2198,6 @@
                 
                 // Filtro Urgentes
                 const matchUrgente = filterOnlyUrgentes ? l.urgente === true : true;
-                
-                // Filtro Mis Leads
-                const matchMine = filterOnlyMine && currentUser ? (l.promotor && (l.promotor.toLowerCase().includes(currentUser.name.toLowerCase()) || l.promotor.toLowerCase().includes(currentUser.username.toLowerCase()))) : true;
 
                 // Filtro por Rango de Fechas
                 let matchDate = true;
@@ -2092,11 +2208,11 @@
                     matchDate = matchDate && (l.fecha <= filterDateEnd);
                 }
 
-                return matchSearch && matchUrgente && matchMine && matchDate;
+                return matchSearch && matchUrgente && matchDate;
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">No se encontraron leads con los criterios ingresados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">No se encontraron registros de leads asignados a tu usuario.</td></tr>`;
                 return;
             }
 
@@ -2113,7 +2229,8 @@
 
                 const rowBg = l.urgente ? 'bg-rose-50/50 hover:bg-rose-100/50 border-l-4 border-l-rose-600' : 'hover:bg-slate-50';
 
-                const canEdit = currentUser && (currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'CARGA');
+                // Jackson y Madelen NO PUEDEN EDITAR NI ELIMINAR. Solo el SUPER_ADMIN puede editar/eliminar.
+                const canEdit = currentUser && currentUser.role === 'SUPER_ADMIN';
                 const canDelete = currentUser && currentUser.role === 'SUPER_ADMIN';
 
                 const row = `
@@ -2127,7 +2244,7 @@
                         <td class="p-3">
                             <div class="font-bold text-slate-800 flex items-center gap-1.5">
                                 ${l.nombre}
-                                ${phoneClean ? `<a href="${waUrl}" target="_blank" class="text-emerald-600 hover:text-emerald-700"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a>` : ''}
+                                ${phoneClean ? `<a href="${waUrl}" target="_blank" class="text-emerald-600 hover:text-emerald-700" title="Enviar WhatsApp Directo"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a>` : ''}
                             </div>
                             <div class="text-[10px] text-slate-400">${l.correo || 'Sin correo'}</div>
                         </td>
@@ -2136,7 +2253,7 @@
                         <td class="p-3">
                             <span class="px-2 py-0.5 rounded text-[9px] font-extrabold border uppercase ${badgeClass}">${l.tipo}</span>
                         </td>
-                        <td class="p-3 text-slate-600 font-medium">${l.promotor}</td>
+                        <td class="p-3 text-slate-800 font-bold bg-amber-50/50 rounded-lg px-2">${l.promotor}</td>
                         <td class="p-3 text-center">
                             <button onclick="openBitacoraModal('${l.id}', '${l.nombre.replace(/'/g, "\\'")}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-[10px] font-bold flex items-center gap-1 mx-auto transition-all">
                                 <i data-lucide="notebook" class="w-3 h-3"></i> Bitácora
@@ -2154,6 +2271,7 @@
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 ` : ''}
+                                ${(!canEdit && !canDelete) ? `<span class="text-[10px] text-slate-400 italic">Registrado</span>` : ''}
                             </div>
                         </td>
                     </tr>
@@ -2162,13 +2280,40 @@
             });
         }
 
+        // --- EXPORTACIÓN A PDF (OPCIÓN 5) ---
+        function exportToPDF() {
+            showToast('Generando informe ejecutivo PDF...', 'info');
+
+            const targetElement = document.getElementById('pdf-export-area');
+            const opt = {
+                margin:       0.3,
+                filename:     `Reporte_Ejecutivo_UTPL_Manta_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            if (window.html2pdf) {
+                window.html2pdf().set(opt).from(targetElement).save().then(() => {
+                    showToast('Reporte PDF descargado con éxito.', 'success');
+                }).catch(err => {
+                    console.error(err);
+                    showToast('Error generando PDF', 'error');
+                });
+            } else {
+                window.print();
+            }
+        }
+
         // --- EXPORTACIÓN A EXCEL ---
         function exportToExcel() {
+            const userDataset = getUserFilteredDataset();
+
             let tableHTML = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
             <head><meta charset="UTF-8"></head>
             <body>
-                <h2>UTPL Centro Manta - Reporte Oficial de Leads</h2>
+                <h2>UTPL Centro Manta - Reporte Oficial de Leads (${currentUser ? currentUser.name : ''})</h2>
                 <table border="1">
                     <thead>
                         <tr style="background-color: #0c2340; color: #ffffff; font-weight: bold;">
@@ -2186,7 +2331,7 @@
                     </thead>
                     <tbody>`;
 
-            leadsData.forEach(item => {
+            userDataset.forEach(item => {
                 tableHTML += `
                     <tr>
                         <td>${item.fecha || ''}</td>
