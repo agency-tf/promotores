@@ -8,392 +8,531 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Supabase JS Client v2 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
+        }
+        .animate-pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-900 min-h-screen flex flex-col">
-
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+<body class="bg-slate-100 font-sans text-slate-900 min-h-screen flex flex-col relative overflow-x-hidden">
 
     <!-- PANTALLA DE LOGIN -->
-    <div id="login-view" class="flex-1 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
-            <div class="text-center mb-6">
-                <div class="inline-flex bg-blue-900 text-amber-400 p-4 rounded-2xl shadow-lg mb-3">
+    <div id="login-view" class="flex-1 flex items-center justify-center p-4 min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950">
+        <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20">
+            <div class="text-center mb-8">
+                <div class="inline-flex bg-gradient-to-tr from-amber-400 to-amber-300 text-blue-950 p-4 rounded-2xl shadow-lg mb-3">
                     <i data-lucide="graduation-cap" class="w-10 h-10"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-slate-800">UTPL - Centro Manta</h1>
-                <p class="text-xs text-slate-500 mt-1 font-medium">Sistema Integrado de Control de Leads</p>
+                <h1 class="text-2xl font-black text-slate-800 tracking-tight">UTPL - Centro Manta</h1>
+                <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Sistema de Control & Crecimiento de Leads</p>
             </div>
 
-            <!-- FORMULARIO DE LOGIN EXCLUSIVO -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usuario</label>
                     <div class="relative">
-                        <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="login-username" required placeholder="Ej: admin" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-xs font-medium">
+                        <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="username" required placeholder="Ej: admin" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none text-xs font-semibold transition-all">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Contraseña</label>
                     <div class="relative">
-                        <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-xs font-medium">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="password" required placeholder="••••••••" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none text-xs font-semibold transition-all">
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
-                    <i data-lucide="log-in" class="w-4 h-4"></i> Acceder al Sistema
+                <div id="login-error" class="hidden text-xs text-rose-600 font-bold text-center bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                    Credenciales incorrectas o usuario no registrado.
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-bold py-3 rounded-xl transition-all shadow-md hover:shadow-xl flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                    <i data-lucide="log-in" class="w-4 h-4"></i> Iniciar Sesión
                 </button>
             </form>
 
             <div class="mt-6 pt-4 border-t border-slate-100 text-center">
-                <span class="text-[11px] text-slate-400">Acceso exclusivo para personal autorizado UTPL</span>
+                <span class="text-[11px] text-slate-400 font-medium">Credencial inicial: <b class="text-blue-900">admin / admin</b></span>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APPLICATION DASHBOARD -->
-    <div id="app-view" class="hidden flex-1 flex flex-col">
-        <header class="bg-blue-950 text-white sticky top-0 z-30 shadow-md border-b border-blue-900">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-amber-400 text-blue-950 p-2 rounded-xl font-bold shadow">
-                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+    <!-- PANEL PRINCIPAL (APPLICATION) -->
+    <div id="app-view" class="hidden flex-1 flex flex-col min-h-screen">
+
+        <!-- OVERLAY SIDEBAR MÓVIL -->
+        <div id="sidebar-overlay" onclick="closeSidebar()" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity"></div>
+
+        <!-- SIDEBAR MENÚ HAMBURGUESA -->
+        <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-blue-950 text-white z-50 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col justify-between border-r border-blue-900">
+            <div>
+                <!-- Encabezado Sidebar -->
+                <div class="p-5 border-b border-blue-900 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-amber-400 text-blue-950 p-2 rounded-xl font-black shadow-md">
+                            <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-black tracking-tight text-white">UTPL Manta</h2>
+                            <p class="text-[10px] text-blue-300 font-medium" id="sidebar-role-description">Sistema de Leads</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 class="text-sm font-bold flex items-center gap-2">
-                            UTPL Centro Manta 
-                            <span class="text-[10px] font-bold bg-blue-900 px-2 py-0.5 rounded-full text-amber-300 border border-blue-800" id="user-role-badge">SUPER_ADMIN</span>
-                        </h1>
-                        <p class="text-[11px] text-blue-300 font-medium" id="user-display-name">Conectado</p>
+                    <button onclick="closeSidebar()" class="p-1.5 text-blue-300 hover:text-white hover:bg-blue-900 rounded-xl transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Perfil Usuario Sidebar -->
+                <div class="p-4 mx-3 my-3 bg-blue-900/60 rounded-2xl border border-blue-800/80">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-amber-400 text-blue-950 font-black flex items-center justify-center text-xs shadow-inner" id="sidebar-user-avatar">
+                            U
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold text-white truncate" id="sidebar-user-name">Usuario</p>
+                            <span class="inline-block px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[9px] font-extrabold uppercase border border-amber-400/30" id="sidebar-user-role">
+                                ADMIN
+                            </span>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Navegación Dinámica -->
+                <nav class="p-3 space-y-1" id="sidebar-nav-links">
+                    <!-- Links generados por JS según el rol -->
+                </nav>
+            </div>
+
+            <!-- Acciones Pie Sidebar -->
+            <div class="p-4 border-t border-blue-900 space-y-2">
+                <button onclick="openPasswordModal(); closeSidebar();" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-blue-200 hover:bg-blue-900 hover:text-white transition-all">
+                    <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i> Cambiar Contraseña
+                </button>
+                <button onclick="handleLogout()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition-all">
+                    <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- HEADER TOP BAR -->
+        <header class="bg-blue-900 text-white sticky top-0 z-30 shadow-md border-b border-blue-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleSidebar()" class="p-2 text-blue-200 hover:text-white hover:bg-blue-800 rounded-xl transition-all" title="Abrir Menú">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-2">
+                        <div class="bg-amber-400 text-blue-950 p-1.5 rounded-lg font-bold">
+                            <i data-lucide="building-2" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-sm font-extrabold tracking-tight">UTPL Centro Manta</span>
+                    </div>
+                </div>
+
+                <!-- Indicador de conexión / Acciones -->
                 <div class="flex items-center gap-2">
-                    <button id="btn-manage-users" onclick="openUserModal()" class="hidden flex items-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm border border-blue-800" title="Gestión de Usuarios">
+                    <span class="hidden md:flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Supabase Online
+                    </span>
+                    <button id="btn-manage-users" onclick="openUserModal()" class="hidden flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
                         <i data-lucide="users" class="w-4 h-4"></i>
                         <span class="hidden sm:inline">Gestión Usuarios</span>
                     </button>
-                    <button id="btn-export-excel" onclick="exportToExcel()" class="hidden flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+                    <button id="btn-export-excel" onclick="exportToExcel()" class="hidden flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shadow-sm">
                         <i data-lucide="download" class="w-4 h-4"></i>
                         <span class="hidden sm:inline">Exportar Excel</span>
-                    </button>
-                    <button onclick="handleLogout()" class="p-2 text-blue-300 hover:text-white hover:bg-blue-900 rounded-xl transition-colors" title="Cerrar Sesión">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
                 </div>
             </div>
         </header>
 
+        <!-- MAIN CONTENT AREA -->
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
 
-            <!-- SECCIÓN 1: FORMULARIO DE REGISTRO DE LEADS -->
-            <section id="section-form" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-2 mb-4">
-                    <div class="p-2 bg-blue-50 text-blue-900 rounded-xl">
-                        <i data-lucide="user-plus" class="w-5 h-5"></i>
-                    </div>
+            <!-- BANNER BIENVENIDA Y ROL -->
+            <div id="role-welcome-banner" class="rounded-2xl p-4 sm:p-5 text-white shadow-md transition-all">
+                <div class="flex items-center gap-3">
+                    <div id="role-banner-icon" class="p-2.5 bg-white/10 rounded-xl"></div>
                     <div>
-                        <h2 class="text-sm font-bold text-slate-800">Registro Diario de Leads</h2>
-                        <p class="text-[11px] text-slate-400">Ingresa los datos del prospecto institucional</p>
+                        <h2 class="text-base font-extrabold tracking-tight flex items-center gap-2" id="role-banner-title">
+                            Cargando Panel...
+                        </h2>
+                        <p class="text-xs text-white/80 mt-0.5" id="role-banner-subtitle"></p>
                     </div>
                 </div>
+                <div class="mt-3 sm:mt-0 flex items-center gap-2" id="role-quick-pills"></div>
+            </div>
 
-                <form id="lead-form" onsubmit="saveLead(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Fecha</label>
-                        <input type="date" id="lead-fecha" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nombres y Apellidos</label>
-                        <input type="text" id="lead-nombre" required placeholder="Ej. María Zambrano" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Cédula / Identificación</label>
-                        <input type="text" id="lead-cedula" oninput="checkDuplicateCedula(this.value)" required placeholder="1312345678" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                        <div id="duplicate-warning" class="hidden text-[10px] text-amber-600 font-bold mt-1 flex items-center gap-1">
-                            <i data-lucide="alert-circle" class="w-3 h-3"></i> ¡Esta cédula ya fue registrada antes!
+            <!-- VISTA 1: DASHBOARD DE INDICADORES -->
+            <div id="view-dashboard" class="app-view-page space-y-6">
+                <!-- Tarjetas de Estadísticas -->
+                <section class="grid grid-cols-2 md:grid-cols-5 gap-3.5" id="stats-summary"></section>
+
+                <!-- Resumen Gráfico Corto -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xs font-extrabold text-slate-700 uppercase mb-3 flex items-center gap-1.5">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-900"></i> Demanda por Carrera Top
+                        </h3>
+                        <div class="h-52 relative">
+                            <canvas id="chart-carreras"></canvas>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Teléfono / WhatsApp</label>
-                        <input type="text" id="lead-telefono" placeholder="0991234567" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Correo Electrónico</label>
-                        <input type="email" id="lead-correo" placeholder="correo@ejemplo.com" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Carrera de Interés</label>
-                        <input type="text" id="lead-carrera" required placeholder="Ej. Psicología / Computación" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Tipo de Oferta</label>
-                        <select id="lead-tipo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                            <option value="TEC">Tecnología Superior (TEC)</option>
-                            <option value="MEL">Grado / Licenciatura (MEL)</option>
-                            <option value="POS">Posgrado / Maestría (POS)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nivel de Interés</label>
-                        <select id="lead-interes" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
-                            <option value="ALTO">Alto (Muy interesado / Cierre próximo)</option>
-                            <option value="MEDIO" selected>Medio (Evaluando opciones)</option>
-                            <option value="BAJO">Bajo (Frío / Indeciso)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Atención Inmediata</label>
-                        <label class="flex items-center gap-2 cursor-pointer px-3 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 transition-colors">
-                            <input type="checkbox" id="lead-urgente" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer">
-                            <i data-lucide="siren" class="w-4 h-4 text-rose-600 animate-pulse"></i>
-                            <span>Marcar Lead URGENTE</span>
-                        </label>
-                    </div>
-                    <div class="sm:col-span-2 lg:col-span-4 flex items-center justify-between pt-2">
-                        <div class="text-xs text-slate-400 font-medium">
-                            Promotor Asignado: <span id="current-promotor-label" class="font-bold text-slate-700">-</span>
-                        </div>
-                        <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 text-xs">
-                            <i data-lucide="save" class="w-4 h-4"></i> Guardar Lead en Supabase
-                        </button>
-                    </div>
-                </form>
-            </section>
-
-            <!-- SECCIÓN 2: TARJETAS DE MÉTRICAS -->
-            <section class="grid grid-cols-2 md:grid-cols-5 gap-4" id="stats-summary"></section>
-
-            <!-- SECCIÓN 3: GRÁFICOS ANALÍTICOS (Chart.js) -->
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-900"></i> Top Carreras Más Solicitadas
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-xs font-extrabold text-slate-700 uppercase mb-3 flex items-center gap-1.5">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-amber-500"></i> Distribución por Oferta
                         </h3>
-                    </div>
-                    <div class="h-64 relative">
-                        <canvas id="carrerasChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-4">
-                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-900"></i> Oferta Académica
-                        </h3>
-                        <div class="h-48 relative flex items-center justify-center">
-                            <canvas id="tipoChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="text-[11px] text-slate-400 text-center pt-2 border-t border-slate-100">
-                        Distribución porcentual en tiempo real
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 4: CUADRO DE AUMENTO POR DÍA -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600"></i> Cuadro de Aumento por Día
-                        </h3>
-                        <p class="text-xs text-slate-400">Variación e incremento comparativo de leads diarios</p>
-                    </div>
-                </div>
-                <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table class="w-full text-left text-xs text-slate-600">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase">
-                            <tr>
-                                <th class="p-3">Fecha</th>
-                                <th class="p-3 text-center">Total Leads</th>
-                                <th class="p-3 text-center">Aumento Neto</th>
-                                <th class="p-3 text-center">Crecimiento (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="daily-growth-table" class="divide-y divide-slate-100 bg-white"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 5: TABLA DE LEADS CON BITÁCORA Y WHATSAPP -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                            <i data-lucide="list" class="w-4 h-4 text-blue-900"></i> Listado General de Leads
-                        </h3>
-                        <p class="text-xs text-slate-400">Gestiona contactos, estado de seguimiento y bitácoras</p>
-                    </div>
-                    <div class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-2">
-                        <button id="btn-filter-urgente" onclick="toggleUrgentFilter()" class="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200">
-                            <i data-lucide="siren" class="w-4 h-4 text-rose-600"></i>
-                            <span>Ver Solo Urgentes</span>
-                            <span id="urgent-badge-count" class="hidden bg-rose-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
-                        </button>
-                        <div class="w-full sm:w-72 relative">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar por nombre, cédula, carrera..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                        <div class="h-52 relative">
+                            <canvas id="chart-tipo"></canvas>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table class="w-full text-left text-xs text-slate-600">
-                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase">
-                            <tr>
-                                <th class="p-3">Fecha</th>
-                                <th class="p-3">Estudiante</th>
-                                <th class="p-3">Contacto</th>
-                                <th class="p-3">Carrera / Tipo</th>
-                                <th class="p-3">Interés</th>
-                                <th class="p-3">Promotor</th>
-                                <th class="p-3 text-center">Bitácora</th>
-                                <th class="p-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leads-table-body" class="divide-y divide-slate-100 bg-white"></tbody>
-                    </table>
-                </div>
-            </section>
+            <!-- VISTA 2: FORMULARIO DE REGISTRO DE LEADS -->
+            <div id="view-form" class="app-view-page hidden">
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-blue-50 text-blue-900 rounded-xl font-bold">
+                                <i data-lucide="user-plus" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-extrabold text-slate-800">Formulario de Carga de Leads</h2>
+                                <p class="text-xs text-slate-400">Ingresa los datos completos del estudiante o prospecto</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="lead-form" onsubmit="saveLead(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Fecha de Registro</label>
+                            <input type="date" id="lead-fecha" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nombres del Estudiante</label>
+                            <input type="text" id="lead-nombre" required placeholder="Nombres completos" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Cédula / Identificación</label>
+                            <input type="text" id="lead-cedula" required oninput="checkDuplicateCedula(this.value)" placeholder="0123456789" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                            <span id="cedula-warning" class="hidden text-[10px] text-amber-600 font-bold mt-1">⚠️ Cédula ya registrada previamente</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Teléfono WhatsApp</label>
+                            <input type="text" id="lead-telefono" placeholder="0991234567" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Correo Electrónico</label>
+                            <input type="email" id="lead-correo" placeholder="correo@ejemplo.com" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Carrera de Interés</label>
+                            <input type="text" id="lead-carrera" required placeholder="Ej. Administración de Empresas" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tipo de Oferta</label>
+                            <select id="lead-tipo" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                                <option value="TEC">Tecnología Superior (TEC)</option>
+                                <option value="MEL">Grado / Licenciatura (MEL)</option>
+                                <option value="POS">Posgrado / Maestría (POS)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Promotor / Asesor</label>
+                            <input type="text" id="lead-promotor" required placeholder="Nombre del promotor" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 focus:bg-white">
+                        </div>
+
+                        <!-- Checkbox URGENTE -->
+                        <div class="sm:col-span-2 lg:col-span-4 bg-rose-50 border border-rose-200 p-3 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="siren" class="w-5 h-5 text-rose-600 animate-pulse"></i>
+                                <div>
+                                    <p class="text-xs font-extrabold text-rose-900">¿Es un Lead URGENTE?</p>
+                                    <p class="text-[10px] text-rose-600">Marcar esta opción notificará prioridad alta al Super Administrador</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="lead-urgente" class="w-5 h-5 accent-rose-600 rounded cursor-pointer">
+                        </div>
+
+                        <div class="sm:col-span-2 lg:col-span-4 flex justify-end pt-2">
+                            <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Guardar Record de Lead
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <!-- VISTA 3: REPORTES & LISTADO GENERAL DE LEADS -->
+            <div id="view-leads" class="app-view-page hidden space-y-4">
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                        <div>
+                            <h2 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                                <i data-lucide="list" class="w-5 h-5 text-blue-900"></i>
+                                Registros e Historial General
+                            </h2>
+                            <p class="text-xs text-slate-400">Listado detallado de estudiantes captados en UTPL Manta</p>
+                        </div>
+
+                        <!-- Filtros Rápidos -->
+                        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                            <div class="relative flex-1 md:w-64">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar nombre, cédula..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600">
+                            </div>
+                            <button id="btn-filter-urgente" onclick="toggleFilterUrgentes()" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-50 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700">
+                                <i data-lucide="siren" class="w-3.5 h-3.5 text-rose-600"></i> Solo Urgentes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Datos -->
+                    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 font-extrabold uppercase border-b border-slate-200 text-[10px]">
+                                <tr>
+                                    <th class="p-3">Prioridad</th>
+                                    <th class="p-3">Fecha</th>
+                                    <th class="p-3">Estudiante</th>
+                                    <th class="p-3">Cédula</th>
+                                    <th class="p-3">Carrera</th>
+                                    <th class="p-3">Tipo</th>
+                                    <th class="p-3">Promotor</th>
+                                    <th class="p-3 text-center">Bitácora</th>
+                                    <th class="p-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leads-table-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VISTA 4: CUADRO DE AUMENTO DIARIO -->
+            <div id="view-growth" class="app-view-page hidden space-y-4">
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="mb-4">
+                        <h2 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i>
+                            Cuadro de Crecimiento & Aumento por Día
+                        </h2>
+                        <p class="text-xs text-slate-400">Variación e incremento comparativo con respecto al día anterior</p>
+                    </div>
+
+                    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-600 uppercase font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3.5">Fecha</th>
+                                    <th class="p-3.5 text-center">Total Leads Registrados</th>
+                                    <th class="p-3.5 text-center">Aumento Neto (vs Día Anterior)</th>
+                                    <th class="p-3.5 text-center">Crecimiento (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-growth-table" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VISTA 5: ANÁLISIS COMPLETO Y GRÁFICOS -->
+            <div id="view-analytics" class="app-view-page hidden space-y-6">
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="mb-5">
+                        <h2 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-600"></i>
+                            Análisis Avanzado de Demanda Académica
+                        </h2>
+                        <p class="text-xs text-slate-400">Métricas comparativas por carreras y modalidades solicitadas</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                            <h3 class="text-xs font-extrabold text-slate-700 uppercase mb-3">Carreras con Mayor Número de Prospectos</h3>
+                            <div class="h-64 relative">
+                                <canvas id="chart-carreras-full"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                            <h3 class="text-xs font-extrabold text-slate-700 uppercase mb-3">Proporción por Nivel Académico</h3>
+                            <div class="h-64 relative">
+                                <canvas id="chart-tipo-full"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
 
         </main>
     </div>
 
-    <!-- MODAL DE BITÁCORA / COMENTARIOS -->
-    <div id="bitacora-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full border border-slate-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <div>
-                    <h3 class="font-bold text-slate-800 text-sm">Bitácora de Seguimiento</h3>
-                    <p class="text-[11px] text-slate-400" id="bitacora-lead-subtitle">Estudiante</p>
+    <!-- MODAL BITÁCORA / NOTAS DE SEGUIMIENTO -->
+    <div id="bitacora-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-md border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
+                        <i data-lucide="notebook-pen" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800">Bitácora de Observaciones</h3>
+                        <p class="text-[10px] text-slate-400" id="bitacora-student-name">Estudiante</p>
+                    </div>
                 </div>
-                <button onclick="closeBitacoraModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+                <button onclick="closeBitacoraModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <div id="bitacora-history" class="space-y-2 max-h-48 overflow-y-auto mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
-                <!-- Dinámico -->
+            <!-- Listado de notas previo -->
+            <div id="bitacora-list" class="max-h-48 overflow-y-auto space-y-2 pr-1">
+                <p class="text-xs text-slate-400 text-center py-4">Sin notas previas.</p>
             </div>
 
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Agregar Comentario / Observación</label>
-                    <textarea id="new-comment-text" rows="3" placeholder="Ej. Se contactó por llamada, mostró interés en beca..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600"></textarea>
-                </div>
-                <div class="flex justify-end gap-2">
-                    <button onclick="closeBitacoraModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
-                    <button onclick="saveNewComment()" class="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold flex items-center gap-1">
-                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Guardar Nota
-                    </button>
-                </div>
+            <!-- Agregar Nueva Nota -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+                <label class="block text-xs font-bold uppercase text-slate-600">Añadir Nueva Observación</label>
+                <textarea id="bitacora-input" rows="3" placeholder="Escribe detalles del avance..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-600"></textarea>
+                <button onclick="addBitacoraNote()" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Comentario
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE GESTIÓN DE USUARIOS (SÓLO SUPER_ADMIN) -->
-    <div id="user-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+    <!-- MODAL CAMBIAR CONTRASEÑA -->
+    <div id="password-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2">
-                    <div class="p-2 bg-blue-100 text-blue-900 rounded-xl">
+                    <div class="p-2 bg-amber-50 text-amber-700 rounded-xl">
+                        <i data-lucide="key-round" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-800">Cambiar Contraseña</h3>
+                </div>
+                <button onclick="closePasswordModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="changePassword(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nueva Contraseña</label>
+                    <input type="password" id="new-password" required minlength="4" placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Confirmar Contraseña</label>
+                    <input type="password" id="confirm-password" required minlength="4" placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-amber-500">
+                </div>
+                <div id="pass-error" class="hidden text-[11px] text-rose-600 font-bold text-center bg-rose-50 p-2 rounded-xl">
+                    Las contraseñas no coinciden.
+                </div>
+                <button type="submit" class="w-full bg-amber-400 hover:bg-amber-300 text-blue-950 font-bold py-2.5 rounded-xl text-xs transition-all shadow-sm">
+                    Actualizar Clave
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL GESTIÓN DE USUARIOS (SUPER_ADMIN) -->
+    <div id="user-modal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-blue-50 text-blue-900 rounded-xl">
                         <i data-lucide="users" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-slate-800 text-sm">Gestión de Usuarios</h3>
-                        <p class="text-xs text-slate-400">Creación y consulta de personal del sistema</p>
+                        <h3 class="text-sm font-extrabold text-slate-800">Gestión de Usuarios Supabase</h3>
+                        <p class="text-[10px] text-slate-400">Crea operadores y visores para el sistema</p>
                     </div>
                 </div>
-                <button onclick="closeUserModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">
+                <button onclick="closeUserModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <!-- FORMULARIO DE REGISTRO DE USUARIOS -->
-            <form id="admin-register-form" onsubmit="handleRegisterUser(event)" class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 class="text-xs font-bold uppercase text-slate-700 mb-2 flex items-center gap-1.5">
-                    <i data-lucide="user-plus" class="w-4 h-4 text-blue-900"></i> Registrar Nuevo Usuario
-                </h4>
-                <div>
+            <form onsubmit="createUserInSupabase(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div class="sm:col-span-2">
                     <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Nombre Completo</label>
-                    <input type="text" id="reg-name" required placeholder="Ej. Juan Pérez" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                    <input type="text" id="new-user-name" required placeholder="Ej. Juan Pérez" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Nombre de Usuario (Login)</label>
-                    <input type="text" id="reg-username" required placeholder="Ej. juanp" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Usuario Login</label>
+                    <input type="text" id="new-user-username" required placeholder="ej. oper1" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Contraseña</label>
-                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Contraseña Inicial</label>
+                    <input type="password" id="new-user-password" required placeholder="••••••••" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Rol Asignado</label>
-                    <select id="reg-role" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
-                        <option value="CARGA">Operador (Ingreso de Datos & Bitácora)</option>
-                        <option value="VISOR">Visualizador (Gráficos y Exportación)</option>
-                        <option value="SUPER_ADMIN">Super Administrador (Acceso Total)</option>
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Rol de Acceso</label>
+                    <select id="new-user-role" required class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs outline-none">
+                        <option value="CARGA">CARGA (Operador / Promotor)</option>
+                        <option value="VISOR">VISOR (Consulta & Excel)</option>
+                        <option value="SUPER_ADMIN">SUPER_ADMIN (Acceso Total)</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
-                    <i data-lucide="user-check" class="w-4 h-4"></i> Guardar Usuario en Supabase
-                </button>
-            </form>
-
-            <!-- LISTADO DE USUARIOS EN SUPABASE -->
-            <div>
-                <h4 class="text-xs font-bold uppercase text-slate-700 mb-2 flex items-center gap-1.5">
-                    <i data-lucide="shield" class="w-4 h-4 text-blue-900"></i> Usuarios Registrados
-                </h4>
-                <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table class="w-full text-left text-xs text-slate-600">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase">
-                            <tr>
-                                <th class="p-2.5">Nombre</th>
-                                <th class="p-2.5">Usuario</th>
-                                <th class="p-2.5">Rol</th>
-                            </tr>
-                        </thead>
-                        <tbody id="app-users-list" class="divide-y divide-slate-100 bg-white">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
+                <div class="sm:col-span-2">
+                    <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 rounded-xl text-xs transition-all shadow-sm">
+                        Registrar Usuario en Supabase
+                    </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
+    <!-- LÓGICA JAVASCRIPT PRINCIPAL -->
     <script>
         // Configuración de Supabase proporcionada por el usuario
         const SUPABASE_URL = 'https://hjlsudhspfbwoualdkea.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_8jqhwZkSvDjk3GT9ln7CWw_frhhM7xo';
         
         let supabaseClient = null;
-        try {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (e) {
-            console.error('Error inicializando Supabase:', e);
+
+        function initSupabase() {
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                try {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                } catch (e) {
+                    console.error('Error inicializando Supabase:', e);
+                }
+            } else {
+                console.warn('Supabase SDK no está listo aún.');
+            }
+        }
+        initSupabase();
+
+        // Helper seguro para renderizar iconos Lucide sin lanzar ReferenceError
+        function safeCreateIcons() {
+            if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+                lucide.createIcons();
+            } else if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
         }
 
         let currentUser = JSON.parse(sessionStorage.getItem('utpl_manta_session')) || null;
         let leadsData = [];
         let carrerasChartInstance = null;
         let tipoChartInstance = null;
+        let carrerasFullChartInstance = null;
+        let tipoFullChartInstance = null;
         let activeLeadIdForBitacora = null;
         let filterOnlyUrgentes = false;
+        let activeView = 'dashboard';
 
         // Interceptar errores de WebSockets en entornos sandbox
         window.addEventListener('error', function(e) {
@@ -404,8 +543,11 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            document.getElementById('lead-fecha').value = new Date().toISOString().split('T')[0];
+            if (!supabaseClient) initSupabase();
+            safeCreateIcons();
+
+            const fechaElem = document.getElementById('lead-fecha');
+            if (fechaElem) fechaElem.value = new Date().toISOString().split('T')[0];
 
             if (currentUser) {
                 showApp();
@@ -419,60 +561,92 @@
             }, 10000);
         });
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-bold text-white flex items-center gap-2 animate-fade-in ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
-            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-triangle'}" class="w-4 h-4"></i> ${message}`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        // --- NAVEGACIÓN Y CAMBIO DE VISTAS TIPO SPA ---
+        function switchView(viewName) {
+            activeView = viewName;
+            closeSidebar();
+
+            // Ocultar todas las páginas
+            document.querySelectorAll('.app-view-page').forEach(page => {
+                page.classList.add('hidden');
+            });
+
+            // Mostrar página seleccionada
+            const targetPage = document.getElementById(`view-${viewName}`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+
+            // Si es urgentes, cambiar la vista a listado con filtro urgente activo
+            if (viewName === 'urgentes') {
+                filterOnlyUrgentes = true;
+                const btn = document.getElementById('btn-filter-urgente');
+                if (btn) btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-rose-600 text-white border-rose-700 shadow-md";
+                const leadsPage = document.getElementById('view-leads');
+                if (leadsPage) leadsPage.classList.remove('hidden');
+            }
+
+            updateActiveNavButtons();
+            renderDashboardData();
         }
 
+        function updateActiveNavButtons() {
+            document.querySelectorAll('#sidebar-nav-links button').forEach(btn => {
+                btn.classList.remove('bg-blue-900', 'text-amber-300');
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+
+        // --- AUTENTICACIÓN Y ROLES ---
         async function handleLogin(e) {
             e.preventDefault();
-            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
-            const passwordInput = document.getElementById('login-password').value.trim();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('login-error');
 
-            // Cuenta por defecto Super Admin (por si la tabla app_users está vacía)
-            if (usernameInput === 'admin' && passwordInput === 'admin') {
-                currentUser = { name: 'Super Administrador', username: 'admin', role: 'SUPER_ADMIN' };
+            if (!supabaseClient) initSupabase();
+
+            // 1. Caso especial por defecto
+            if (u === 'admin' && p === 'admin') {
+                currentUser = { username: 'admin', name: 'Super Administrador UTPL', role: 'SUPER_ADMIN' };
                 sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
+                errorDiv.classList.add('hidden');
                 showApp();
-                showToast('Bienvenido, Super Administrador', 'success');
                 return;
             }
 
-            if (!supabaseClient) {
-                showToast('Error de conexión con Supabase.', 'error');
-                return;
-            }
-
+            // 2. Consulta en Supabase
             try {
-                // Consultar en la tabla app_users de Supabase
                 const { data, error } = await supabaseClient
                     .from('app_users')
                     .select('*')
-                    .eq('username', usernameInput)
+                    .eq('username', u)
                     .single();
 
-                if (error || !data) {
-                    showToast('Usuario o contraseña incorrectos.', 'error');
-                    return;
+                if (data && (!data.password || data.password === p)) {
+                    currentUser = { username: data.username, name: data.name, role: data.role };
+                    sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
+                    errorDiv.classList.add('hidden');
+                    showApp();
+                } else {
+                    errorDiv.classList.remove('hidden');
                 }
-
-                // Autenticación exitosa
-                currentUser = { name: data.name, username: data.username, role: data.role };
-                sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
-                showApp();
-                showToast(`Sesión iniciada como ${data.name}`, 'success');
-
             } catch (err) {
                 console.error(err);
-                showToast('Error al autenticar con Supabase.', 'error');
+                errorDiv.classList.remove('hidden');
             }
         }
 
@@ -487,75 +661,238 @@
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('app-view').classList.remove('hidden');
 
-            const role = currentUser.role;
-            document.getElementById('user-role-badge').textContent = role;
-            document.getElementById('user-display-name').textContent = currentUser.name;
-            document.getElementById('current-promotor-label').textContent = currentUser.name;
+            document.getElementById('sidebar-user-name').textContent = currentUser.name;
+            document.getElementById('sidebar-user-role').textContent = currentUser.role;
+            document.getElementById('sidebar-user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
 
-            // Permisos por roles
-            const formSec = document.getElementById('section-form');
-            if (role === 'SUPER_ADMIN' || role === 'CARGA') {
-                formSec.classList.remove('hidden');
-            } else {
-                formSec.classList.add('hidden');
-            }
-
-            const btnExcel = document.getElementById('btn-export-excel');
-            if (role === 'SUPER_ADMIN' || role === 'VISOR') {
-                btnExcel.classList.remove('hidden');
-            } else {
-                btnExcel.classList.add('hidden');
-            }
-
-            const btnUsers = document.getElementById('btn-manage-users');
-            if (role === 'SUPER_ADMIN') {
-                btnUsers.classList.remove('hidden');
-            } else {
-                btnUsers.classList.add('hidden');
-            }
-
+            setupRoleInterface(currentUser.role);
             fetchLeadsFromSupabase();
         }
 
-        function checkDuplicateCedula(cedula) {
-            const warning = document.getElementById('duplicate-warning');
-            if (!cedula || cedula.length < 5) {
-                warning.classList.add('hidden');
+        function setupRoleInterface(role) {
+            const btnExcel = document.getElementById('btn-export-excel');
+            const btnUsers = document.getElementById('btn-manage-users');
+            const navLinks = document.getElementById('sidebar-nav-links');
+            const banner = document.getElementById('role-welcome-banner');
+            const bannerTitle = document.getElementById('role-banner-title');
+            const bannerSub = document.getElementById('role-banner-subtitle');
+            const bannerIcon = document.getElementById('role-banner-icon');
+            const bannerPills = document.getElementById('role-quick-pills');
+
+            if (role === 'SUPER_ADMIN') {
+                btnExcel.classList.remove('hidden');
+                btnUsers.classList.remove('hidden');
+
+                banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
+                bannerIcon.innerHTML = `<i data-lucide="shield-check" class="w-6 h-6 text-amber-400"></i>`;
+                bannerTitle.innerHTML = `Centro de Control Administrador <span class="bg-amber-400 text-blue-950 text-[10px] px-2 py-0.5 rounded-full font-bold">ACCESO TOTAL</span>`;
+                bannerSub.textContent = "Supervisión general, analítica en tiempo real, gestión de usuarios y control de leads.";
+
+                bannerPills.innerHTML = `
+                    <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amber-300"></i> Nuevo Lead
+                    </button>
+                    <button onclick="openUserModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 rounded-xl text-xs font-bold transition-all shadow-sm">
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i> Usuarios
+                    </button>
+                `;
+
+                navLinks.innerHTML = `
+                    <button onclick="switchView('dashboard')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i> Dashboard General
+                    </button>
+                    <button onclick="switchView('form')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="user-plus" class="w-4 h-4 text-blue-400"></i> Registrar Nuevo Lead
+                    </button>
+                    <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="list" class="w-4 h-4 text-indigo-400"></i> Listado & Registros
+                    </button>
+                    <button onclick="switchView('urgentes')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/50 hover:text-white transition-all">
+                        <i data-lucide="siren" class="w-4 h-4 text-rose-400"></i> Ver Leads Urgentes
+                    </button>
+                    <button onclick="switchView('growth')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i> Crecimiento Diario
+                    </button>
+                    <button onclick="switchView('analytics')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-purple-400"></i> Análisis Demanda
+                    </button>
+                    <button onclick="openUserModal(); closeSidebar();" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-blue-900 hover:text-amber-200 transition-all">
+                        <i data-lucide="users" class="w-4 h-4"></i> Gestión de Usuarios
+                    </button>
+                `;
+
+                document.getElementById('sidebar-role-description').textContent = 'Super Administrador de Sistema';
+
+            } else if (role === 'CARGA') { // OPERADOR / PROMOTOR
+                btnExcel.classList.add('hidden');
+                btnUsers.classList.add('hidden');
+
+                banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
+                bannerIcon.innerHTML = `<i data-lucide="pen-tool" class="w-6 h-6 text-blue-300"></i>`;
+                bannerTitle.innerHTML = `Panel de Operación y Registro <span class="bg-blue-700 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">OPERADOR</span>`;
+                bannerSub.textContent = "Ingresa nuevos prospectos, marca casos urgentes y gestiona notas en la bitácora.";
+
+                bannerPills.innerHTML = `
+                    <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-blue-950 rounded-xl text-xs font-bold transition-all shadow-sm">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Registrar Lead
+                    </button>
+                    <button onclick="switchView('urgentes')" class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                        <i data-lucide="siren" class="w-3.5 h-3.5"></i> Urgentes
+                    </button>
+                `;
+
+                navLinks.innerHTML = `
+                    <button onclick="switchView('form')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-blue-900 hover:text-amber-200 transition-all">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Formulario de Carga
+                    </button>
+                    <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Listado & Bitácora
+                    </button>
+                    <button onclick="switchView('urgentes')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/50 hover:text-white transition-all">
+                        <i data-lucide="siren" class="w-4 h-4 text-rose-400"></i> Marcar / Ver Urgentes
+                    </button>
+                `;
+
+                document.getElementById('sidebar-role-description').textContent = 'Operador de Carga & Bitácora';
+                if (activeView === 'dashboard') switchView('form');
+
+            } else if (role === 'VISOR') { // VISUALIZADOR
+                btnExcel.classList.remove('hidden');
+                btnUsers.classList.add('hidden');
+
+                banner.className = "rounded-2xl p-4 sm:p-5 text-white shadow-md bg-gradient-to-r from-emerald-950 via-teal-900 to-blue-950 border border-teal-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
+                bannerIcon.innerHTML = `<i data-lucide="file-spreadsheet" class="w-6 h-6 text-emerald-300"></i>`;
+                bannerTitle.innerHTML = `Panel Ejecutivo de Consulta y Registros <span class="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">VISUALIZADOR</span>`;
+                bannerSub.textContent = "Consulta general de estudiantes, cuadro de crecimiento diario y descarga de reportes.";
+
+                bannerPills.innerHTML = `
+                    <button onclick="exportToExcel()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Excel
+                    </button>
+                `;
+
+                navLinks.innerHTML = `
+                    <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-300 hover:bg-blue-900 hover:text-emerald-200 transition-all">
+                        <i data-lucide="list" class="w-4 h-4"></i> Reporte & Listado General
+                    </button>
+                    <button onclick="switchView('growth')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i> Crecimiento por Día
+                    </button>
+                    <button onclick="switchView('analytics')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-purple-400"></i> Gráficos Analíticos
+                    </button>
+                `;
+
+                document.getElementById('sidebar-role-description').textContent = 'Visualizador & Exportador de Datos';
+                if (activeView === 'dashboard') switchView('leads');
+            }
+
+            safeCreateIcons();
+        }
+
+        // --- GESTIÓN DE CAMBIO DE CONTRASEÑA ---
+        function openPasswordModal() {
+            document.getElementById('password-modal').classList.remove('hidden');
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            safeCreateIcons();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+        }
+
+        async function changePassword(e) {
+            e.preventDefault();
+            const p1 = document.getElementById('new-password').value;
+            const p2 = document.getElementById('confirm-password').value;
+            const err = document.getElementById('pass-error');
+
+            if (p1 !== p2) {
+                err.classList.remove('hidden');
                 return;
             }
-            const exists = leadsData.some(l => l.cedula === cedula.trim());
-            if (exists) {
-                warning.classList.remove('hidden');
-            } else {
-                warning.classList.add('hidden');
+
+            err.classList.add('hidden');
+
+            try {
+                if (currentUser.username !== 'admin') {
+                    await supabaseClient
+                        .from('app_users')
+                        .update({ password: p1 })
+                        .eq('username', currentUser.username);
+                }
+                closePasswordModal();
+                alert('Contraseña actualizada correctamente.');
+            } catch (error) {
+                console.error(error);
+                alert('Error al guardar la contraseña.');
             }
         }
 
-        async function fetchLeadsFromSupabase(showLoader = true) {
-            if (!supabaseClient) return;
+        // --- GESTIÓN DE USUARIOS POR PARTE DEL SUPER_ADMIN ---
+        function openUserModal() {
+            document.getElementById('user-modal').classList.remove('hidden');
+            safeCreateIcons();
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-modal').classList.add('hidden');
+        }
+
+        async function createUserInSupabase(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-user-name').value.trim();
+            const username = document.getElementById('new-user-username').value.trim();
+            const password = document.getElementById('new-user-password').value.trim();
+            const role = document.getElementById('new-user-role').value;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('app_users')
+                    .insert([{ name, username, password, role }]);
+
+                if (error) throw error;
+
+                alert(`Usuario ${username} creado con éxito.`);
+                closeUserModal();
+            } catch (err) {
+                console.error(err);
+                alert('Error creando usuario. Es posible que el nombre de usuario ya exista.');
+            }
+        }
+
+        // --- CONSULTA Y MANEJO DE DATOS DESDE SUPABASE ---
+        async function fetchLeadsFromSupabase(showLoading = true) {
+            if (!supabaseClient) initSupabase();
+
             try {
                 const { data, error } = await supabaseClient
                     .from('leads')
                     .select('*')
-                    .order('fecha', { ascending: false });
+                    .order('created_at', { ascending: false });
 
-                if (error) {
-                    console.error(error);
-                    return;
-                }
+                if (error) throw error;
 
                 leadsData = data || [];
-                updateDashboard();
+                renderDashboardData();
             } catch (err) {
                 console.error('Error fetching leads:', err);
             }
         }
 
+        function renderDashboardData() {
+            renderStats();
+            renderCharts();
+            renderDailyGrowthTable();
+            renderTable();
+            safeCreateIcons();
+        }
+
+        // --- OPERACIONES DE REGISTRO DE LEADS ---
         async function saveLead(e) {
             e.preventDefault();
-            if (!supabaseClient) return;
-
-            const isUrgent = document.getElementById('lead-urgente').checked;
+            if (!supabaseClient) initSupabase();
 
             const newLead = {
                 fecha: document.getElementById('lead-fecha').value,
@@ -565,344 +902,97 @@
                 correo: document.getElementById('lead-correo').value.trim(),
                 carrera: document.getElementById('lead-carrera').value.trim(),
                 tipo: document.getElementById('lead-tipo').value,
-                nivel_interes: document.getElementById('lead-interes').value,
-                es_urgente: isUrgent,
-                promotor: currentUser.name,
-                observaciones: `Registro inicial por ${currentUser.name}${isUrgent ? ' 🚨 [MARCADO COMO URGENTE DE ATENCIÓN INMEDIATA]' : ''}`
+                promotor: document.getElementById('lead-promotor').value.trim(),
+                urgente: document.getElementById('lead-urgente').checked,
+                observaciones: ''
             };
 
             try {
-                const { error } = await supabaseClient.from('leads').insert([newLead]);
-                if (error) {
-                    showToast(`Error al guardar: ${error.message}`, 'error');
-                } else {
-                    showToast(isUrgent ? '🚨 Lead URGENTE registrado con éxito' : 'Lead guardado exitosamente en Supabase', 'success');
-                    document.getElementById('lead-nombre').value = '';
-                    document.getElementById('lead-cedula').value = '';
-                    document.getElementById('lead-telefono').value = '';
-                    document.getElementById('lead-correo').value = '';
-                    document.getElementById('lead-carrera').value = '';
-                    document.getElementById('lead-urgente').checked = false;
-                    document.getElementById('duplicate-warning').classList.add('hidden');
-                    fetchLeadsFromSupabase(false);
-                }
-            } catch (err) {
-                showToast('Error de conexión al guardar lead.', 'error');
-            }
-        }
-
-        async function toggleUrgentStatus(id, currentStatus) {
-            if (!supabaseClient) return;
-            const newStatus = !currentStatus;
-            try {
                 const { error } = await supabaseClient
                     .from('leads')
-                    .update({ es_urgente: newStatus })
-                    .eq('id', id);
+                    .insert([newLead]);
 
-                if (error) {
-                    showToast(`Error al actualizar estado urgente: ${error.message}`, 'error');
-                } else {
-                    showToast(newStatus ? '🚨 Lead marcado como URGENTE' : 'Marcador URGENTE removido', 'success');
-                    fetchLeadsFromSupabase(false);
-                }
-            } catch (e) {
-                showToast('Error de conexión al cambiar urgencia.', 'error');
+                if (error) throw error;
+
+                // Limpiar inputs
+                document.getElementById('lead-nombre').value = '';
+                document.getElementById('lead-cedula').value = '';
+                document.getElementById('lead-telefono').value = '';
+                document.getElementById('lead-correo').value = '';
+                document.getElementById('lead-carrera').value = '';
+                document.getElementById('lead-promotor').value = '';
+                document.getElementById('lead-urgente').checked = false;
+                document.getElementById('cedula-warning').classList.add('hidden');
+
+                await fetchLeadsFromSupabase();
+                switchView('leads');
+            } catch (err) {
+                console.error(err);
+                alert('Error al guardar el lead en Supabase.');
             }
         }
 
-        function toggleUrgentFilter() {
-            filterOnlyUrgentes = !filterOnlyUrgentes;
-            const btn = document.getElementById('btn-filter-urgente');
-            if (filterOnlyUrgentes) {
-                btn.className = "w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-rose-600 text-white border-rose-700 shadow-md";
+        function checkDuplicateCedula(val) {
+            const warning = document.getElementById('cedula-warning');
+            const exists = leadsData.some(l => l.cedula && l.cedula.trim() === val.trim());
+            if (exists && val.length > 5) {
+                warning.classList.remove('hidden');
             } else {
-                btn.className = "w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200";
+                warning.classList.add('hidden');
             }
-            renderTable();
+        }
+
+        async function toggleUrgente(id, currentVal) {
+            try {
+                await supabaseClient
+                    .from('leads')
+                    .update({ urgente: !currentVal })
+                    .eq('id', id);
+
+                fetchLeadsFromSupabase(false);
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         async function deleteLead(id) {
-            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
-                showToast('Solo el Super Administrador puede eliminar registros.', 'error');
-                return;
-            }
-            if (!supabaseClient) return;
+            if (confirm('¿Desea eliminar definitivamente este registro de lead?')) {
+                try {
+                    await supabaseClient
+                        .from('leads')
+                        .delete()
+                        .eq('id', id);
 
-            try {
-                const { error } = await supabaseClient.from('leads').delete().eq('id', id);
-                if (error) {
-                    showToast(`Error al eliminar: ${error.message}`, 'error');
-                } else {
-                    showToast('Lead eliminado correctamente.', 'success');
-                    fetchLeadsFromSupabase(false);
+                    fetchLeadsFromSupabase();
+                } catch (err) {
+                    console.error(err);
                 }
-            } catch (e) {
-                showToast('Error al procesar eliminación.', 'error');
             }
         }
 
-        function updateDashboard() {
-            renderStats();
-            renderCharts();
-            renderDailyGrowthTable();
-            renderTable();
-            lucide.createIcons();
-        }
-
-        function renderStats() {
-            const container = document.getElementById('stats-summary');
-            const total = leadsData.length;
-            const tec = leadsData.filter(l => l.tipo === 'TEC').length;
-            const mel = leadsData.filter(l => l.tipo === 'MEL').length;
-            const pos = leadsData.filter(l => l.tipo === 'POS').length;
-            const urgentes = leadsData.filter(l => l.es_urgente).length;
-
-            const urgentBadgeCount = document.getElementById('urgent-badge-count');
-            if (urgentBadgeCount) {
-                urgentBadgeCount.textContent = urgentes;
-                if (urgentes > 0) urgentBadgeCount.classList.remove('hidden');
-                else urgentBadgeCount.classList.add('hidden');
-            }
-
-            container.innerHTML = `
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Total Leads</p><h3 class="text-2xl font-bold text-slate-800">${total}</h3></div>
-                    <div class="p-3 bg-blue-50 text-blue-900 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border ${urgentes > 0 ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200'} shadow-sm flex items-center justify-between cursor-pointer" onclick="toggleUrgentFilter()">
-                    <div>
-                        <p class="text-[11px] ${urgentes > 0 ? 'text-rose-600 font-extrabold' : 'text-slate-400 font-bold'} uppercase flex items-center gap-1">
-                            ${urgentes > 0 ? '<span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span>' : ''} Urgentes
-                        </p>
-                        <h3 class="text-2xl font-bold ${urgentes > 0 ? 'text-rose-600' : 'text-slate-800'}">${urgentes}</h3>
-                    </div>
-                    <div class="p-3 ${urgentes > 0 ? 'bg-rose-600 text-white shadow-md shadow-rose-200 animate-bounce' : 'bg-rose-50 text-rose-600'} rounded-xl">
-                        <i data-lucide="siren" class="w-6 h-6"></i>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Tecnologías (TEC)</p><h3 class="text-2xl font-bold text-blue-600">${tec}</h3></div>
-                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="book-open" class="w-6 h-6"></i></div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Grado (MEL)</p><h3 class="text-2xl font-bold text-amber-600">${mel}</h3></div>
-                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="graduation-cap" class="w-6 h-6"></i></div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Posgrados (POS)</p><h3 class="text-2xl font-bold text-purple-600">${pos}</h3></div>
-                    <div class="p-3 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="award" class="w-6 h-6"></i></div>
-                </div>
-            `;
-        }
-
-        function renderCharts() {
-            // Top Carreras
-            const carreraCounts = {};
-            leadsData.forEach(l => {
-                if (l.carrera) {
-                    const c = l.carrera.trim();
-                    carreraCounts[c] = (carreraCounts[c] || 0) + 1;
-                }
-            });
-            const sortedCarreras = Object.entries(carreraCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
-            const carrerasLabels = sortedCarreras.map(i => i[0]);
-            const carrerasValues = sortedCarreras.map(i => i[1]);
-
-            const ctx1 = document.getElementById('carrerasChart').getContext('2d');
-            if (carrerasChartInstance) carrerasChartInstance.destroy();
-            carrerasChartInstance = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: carrerasLabels.length ? carrerasLabels : ['Sin registros'],
-                    datasets: [{
-                        label: 'Leads por Carrera',
-                        data: carrerasValues.length ? carrerasValues : [0],
-                        backgroundColor: '#1e3a8a',
-                        borderRadius: 8
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            // Tipo Oferta
-            const tec = leadsData.filter(l => l.tipo === 'TEC').length;
-            const mel = leadsData.filter(l => l.tipo === 'MEL').length;
-            const pos = leadsData.filter(l => l.tipo === 'POS').length;
-
-            const ctx2 = document.getElementById('tipoChart').getContext('2d');
-            if (tipoChartInstance) tipoChartInstance.destroy();
-            tipoChartInstance = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: ['TEC', 'Grado', 'Posgrado'],
-                    datasets: [{
-                        data: [tec, mel, pos],
-                        backgroundColor: ['#2563eb', '#d97706', '#9333ea'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
-            });
-        }
-
-        function renderDailyGrowthTable() {
-            const tbody = document.getElementById('daily-growth-table');
-            tbody.innerHTML = '';
-
-            const countsByDate = {};
-            leadsData.forEach(l => {
-                if (l.fecha) {
-                    countsByDate[l.fecha] = (countsByDate[l.fecha] || 0) + 1;
-                }
-            });
-
-            const sortedDates = Object.keys(countsByDate).sort();
-            if (sortedDates.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Sin datos registrados.</td></tr>`;
-                return;
-            }
-
-            let prevCount = 0;
-            sortedDates.forEach((date, idx) => {
-                const currentCount = countsByDate[date];
-                const diff = idx === 0 ? currentCount : currentCount - prevCount;
-                let pct = 0;
-                if (idx > 0 && prevCount > 0) {
-                    pct = ((diff / prevCount) * 100).toFixed(1);
-                }
-
-                let badgeColor = 'text-slate-600 bg-slate-100';
-                let icon = 'minus';
-                if (diff > 0) {
-                    badgeColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
-                    icon = 'trending-up';
-                } else if (diff < 0) {
-                    badgeColor = 'text-red-700 bg-red-50 border-red-200';
-                    icon = 'trending-down';
-                }
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="p-3 font-mono font-bold text-slate-700">${date}</td>
-                        <td class="p-3 text-center font-bold text-slate-800">${currentCount} leads</td>
-                        <td class="p-3 text-center">
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${badgeColor}">
-                                <i data-lucide="${icon}" class="w-3 h-3"></i> ${diff > 0 ? '+' : ''}${diff}
-                            </span>
-                        </td>
-                        <td class="p-3 text-center font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}">
-                            ${idx === 0 ? 'Base Inicial' : `${diff > 0 ? '+' : ''}${pct}%`}
-                        </td>
-                    </tr>
-                `;
-                prevCount = currentCount;
-            });
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('leads-table-body');
-            const search = document.getElementById('search-input').value.toLowerCase();
-            tbody.innerHTML = '';
-
-            let filtered = leadsData.filter(l => 
-                (l.nombre && l.nombre.toLowerCase().includes(search)) || 
-                (l.cedula && l.cedula.includes(search)) || 
-                (l.carrera && l.carrera.toLowerCase().includes(search)) ||
-                (l.promotor && l.promotor.toLowerCase().includes(search))
-            );
-
-            if (filterOnlyUrgentes) {
-                filtered = filtered.filter(l => l.es_urgente);
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">No se encontraron registros ${filterOnlyUrgentes ? 'urgentes' : ''}.</td></tr>`;
-                return;
-            }
-
-            filtered.sort((a, b) => {
-                // Colocar siempre los urgentes primero si no se está filtrando sólo urgentes
-                if (a.es_urgente !== b.es_urgente) return b.es_urgente ? 1 : -1;
-                return new Date(b.fecha) - new Date(a.fecha);
-            });
-
-            filtered.forEach(l => {
-                let badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                if (l.tipo === 'MEL') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
-                if (l.tipo === 'POS') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
-
-                let interesBadge = 'bg-slate-100 text-slate-700';
-                if (l.nivel_interes === 'ALTO') interesBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                else if (l.nivel_interes === 'BAJO') interesBadge = 'bg-rose-50 text-rose-700 border-rose-200';
-
-                // WhatsApp Link
-                const cleanPhone = l.telefono ? l.telefono.replace(/\D/g, '') : '';
-                const waLink = cleanPhone ? `https://wa.me/593${cleanPhone.startsWith('0') ? cleanPhone.slice(1) : cleanPhone}?text=Hola%20${encodeURIComponent(l.nombre)},%20te%20escribimos%20desde%20la%20UTPL%20Centro%20Manta...` : '#';
-
-                const canDelete = currentUser.role === 'SUPER_ADMIN';
-                const isUrgent = !!l.es_urgente;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors ${isUrgent ? 'bg-rose-50/40 border-l-4 border-l-rose-500' : ''}">
-                        <td class="p-3 font-mono text-xs text-slate-500 whitespace-nowrap">
-                            ${l.fecha}
-                            ${isUrgent ? '<div class="mt-1"><span class="inline-flex items-center gap-1 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse"><i data-lucide="siren" class="w-3 h-3"></i> URGENTE</span></div>' : ''}
-                        </td>
-                        <td class="p-3">
-                            <div class="font-bold text-slate-800 flex items-center gap-1.5">
-                                ${l.nombre}
-                            </div>
-                            <div class="text-[10px] text-slate-400">CI: ${l.cedula}</div>
-                        </td>
-                        <td class="p-3">
-                            <div class="font-mono text-xs">${l.telefono || '-'}</div>
-                            ${cleanPhone ? `<a href="${waLink}" target="_blank" class="text-[10px] text-emerald-600 font-bold hover:underline flex items-center gap-1 mt-0.5"><i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp</a>` : ''}
-                        </td>
-                        <td class="p-3">
-                            <div class="text-slate-700 font-medium">${l.carrera}</div>
-                            <span class="px-2 py-0.5 rounded text-[9px] font-bold border uppercase inline-block mt-0.5 ${badgeClass}">${l.tipo}</span>
-                        </td>
-                        <td class="p-3">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-bold border ${interesBadge}">${l.nivel_interes || 'MEDIO'}</span>
-                        </td>
-                        <td class="p-3 text-slate-600 font-medium">${l.promotor}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="openBitacoraModal('${l.id}')" class="p-1.5 bg-blue-50 text-blue-900 hover:bg-blue-100 rounded-xl transition-colors" title="Ver / Agregar Bitácora">
-                                <i data-lucide="file-text" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                        <td class="p-3 text-center">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="toggleUrgentStatus('${l.id}', ${isUrgent})" class="p-1.5 ${isUrgent ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'} rounded-xl transition-colors" title="${isUrgent ? 'Quitar marcador URGENTE' : 'Marcar como URGENTE'}">
-                                    <i data-lucide="siren" class="w-4 h-4"></i>
-                                </button>
-                                ${canDelete ? `
-                                    <button onclick="deleteLead('${l.id}')" class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors" title="Eliminar">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // --- GESTIÓN DE BITÁCORA ---
-        function openBitacoraModal(id) {
+        // --- BITÁCORA / COMENTARIOS ---
+        function openBitacoraModal(id, nombre) {
             activeLeadIdForBitacora = id;
-            const lead = leadsData.find(l => l.id == id);
-            if (!lead) return;
-
-            document.getElementById('bitacora-lead-subtitle').textContent = `${lead.nombre} (${lead.carrera})`;
-            
-            const historyDiv = document.getElementById('bitacora-history');
-            historyDiv.innerHTML = `<div class="p-2 bg-white rounded-lg border border-slate-200 text-slate-700"><b>Observaciones iniciales:</b> ${lead.observaciones || 'Sin notas registradas.'}</div>`;
-
-            document.getElementById('new-comment-text').value = '';
+            document.getElementById('bitacora-student-name').textContent = nombre;
             document.getElementById('bitacora-modal').classList.remove('hidden');
-            lucide.createIcons();
+            
+            const lead = leadsData.find(l => l.id === id);
+            const list = document.getElementById('bitacora-list');
+            list.innerHTML = '';
+
+            if (lead && lead.observaciones) {
+                const notes = lead.observaciones.split('\n').filter(n => n.trim() !== '');
+                notes.forEach(note => {
+                    list.innerHTML += `
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+                            ${note}
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Sin observaciones previas.</p>';
+            }
+            safeCreateIcons();
         }
 
         function closeBitacoraModal() {
@@ -910,135 +1000,298 @@
             activeLeadIdForBitacora = null;
         }
 
-        async function saveNewComment() {
-            const comment = document.getElementById('new-comment-text').value.trim();
-            if (!comment) {
-                showToast('Escribe un comentario válido.', 'error');
-                return;
-            }
-            if (!supabaseClient || !activeLeadIdForBitacora) return;
+        async function addBitacoraNote() {
+            const input = document.getElementById('bitacora-input');
+            const text = input.value.trim();
+            if (!text || !activeLeadIdForBitacora) return;
 
-            const lead = leadsData.find(l => l.id == activeLeadIdForBitacora);
-            if (!lead) return;
-
-            const updatedObservaciones = `${lead.observaciones || ''}\n[${new Date().toLocaleDateString()} ${currentUser.name}]: ${comment}`;
+            const lead = leadsData.find(l => l.id === activeLeadIdForBitacora);
+            const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const newNote = `[${now} - ${currentUser.name}]: ${text}`;
+            
+            const updatedObs = lead.observaciones ? `${lead.observaciones}\n${newNote}` : newNote;
 
             try {
-                const { error } = await supabaseClient
+                await supabaseClient
                     .from('leads')
-                    .update({ observaciones: updatedObservaciones })
+                    .update({ observaciones: updatedObs })
                     .eq('id', activeLeadIdForBitacora);
 
-                if (error) {
-                    showToast(`Error al guardar bitácora: ${error.message}`, 'error');
-                } else {
-                    showToast('Bitácora actualizada con éxito.', 'success');
-                    closeBitacoraModal();
-                    fetchLeadsFromSupabase(false);
-                }
-            } catch (e) {
-                showToast('Error de conexión al actualizar bitácora.', 'error');
+                input.value = '';
+                openBitacoraModal(activeLeadIdForBitacora, lead.nombre);
+                fetchLeadsFromSupabase(false);
+            } catch (err) {
+                console.error(err);
             }
         }
 
-        // --- GESTIÓN DE USUARIOS (SUPER_ADMIN) ---
-        function openUserModal() {
-            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') return;
-            document.getElementById('user-modal').classList.remove('hidden');
-            fetchAppUsersFromSupabase();
-            lucide.createIcons();
+        // --- METRICAS Y DIBUJO DE CHART.JS ---
+        function renderStats() {
+            const container = document.getElementById('stats-summary');
+            if (!container) return;
+
+            const total = leadsData.length;
+            const tec = leadsData.filter(l => l.tipo === 'TEC').length;
+            const mel = leadsData.filter(l => l.tipo === 'MEL').length;
+            const pos = leadsData.filter(l => l.tipo === 'POS').length;
+            const urgentes = leadsData.filter(l => l.urgente).length;
+
+            container.innerHTML = `
+                <div onclick="switchView('leads')" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-300 transition-all">
+                    <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Total Leads</p><h3 class="text-xl font-black text-slate-800">${total}</h3></div>
+                    <div class="p-2.5 bg-blue-50 text-blue-900 rounded-xl"><i data-lucide="users" class="w-5 h-5"></i></div>
+                </div>
+                <div onclick="switchView('urgentes')" class="bg-rose-50 p-3.5 rounded-2xl border border-rose-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-rose-400 transition-all animate-pulse-subtle">
+                    <div><p class="text-[10px] text-rose-600 font-extrabold uppercase">Leads Urgentes</p><h3 class="text-xl font-black text-rose-700">${urgentes}</h3></div>
+                    <div class="p-2.5 bg-rose-600 text-white rounded-xl"><i data-lucide="siren" class="w-5 h-5"></i></div>
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Tecnologías (TEC)</p><h3 class="text-xl font-black text-blue-600">${tec}</h3></div>
+                    <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="book-open" class="w-5 h-5"></i></div>
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Grado (MEL)</p><h3 class="text-xl font-black text-amber-600">${mel}</h3></div>
+                    <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="graduation-cap" class="w-5 h-5"></i></div>
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Posgrados (POS)</p><h3 class="text-xl font-black text-purple-600">${pos}</h3></div>
+                    <div class="p-2.5 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="award" class="w-5 h-5"></i></div>
+                </div>
+            `;
         }
 
-        function closeUserModal() {
-            document.getElementById('user-modal').classList.add('hidden');
+        function renderCharts() {
+            // Conteo carreras
+            const carrerasMap = {};
+            leadsData.forEach(l => {
+                if (l.carrera) {
+                    const c = l.carrera.trim();
+                    carrerasMap[c] = (carrerasMap[c] || 0) + 1;
+                }
+            });
+
+            const topCarreras = Object.entries(carrerasMap)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const labelsCarreras = topCarreras.map(x => x[0]);
+            const dataCarreras = topCarreras.map(x => x[1]);
+
+            // Chart Dashboard Carreras
+            const ctx1 = document.getElementById('chart-carreras');
+            if (ctx1) {
+                if (carrerasChartInstance) carrerasChartInstance.destroy();
+                carrerasChartInstance = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsCarreras,
+                        datasets: [{
+                            label: 'Leads',
+                            data: dataCarreras,
+                            backgroundColor: '#1e3a8a',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+
+            // Chart Dashboard Tipo
+            const ctx2 = document.getElementById('chart-tipo');
+            if (ctx2) {
+                if (tipoChartInstance) tipoChartInstance.destroy();
+                tipoChartInstance = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['TEC', 'MEL', 'POS'],
+                        datasets: [{
+                            data: [
+                                leadsData.filter(l => l.tipo === 'TEC').length,
+                                leadsData.filter(l => l.tipo === 'MEL').length,
+                                leadsData.filter(l => l.tipo === 'POS').length
+                            ],
+                            backgroundColor: ['#2563eb', '#d97706', '#9333ea']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // Charts completas en vista Analytics
+            const ctx3 = document.getElementById('chart-carreras-full');
+            if (ctx3) {
+                if (carrerasFullChartInstance) carrerasFullChartInstance.destroy();
+                carrerasFullChartInstance = new Chart(ctx3, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(carrerasMap),
+                        datasets: [{
+                            label: 'Interesados',
+                            data: Object.values(carrerasMap),
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
         }
 
-        async function fetchAppUsersFromSupabase() {
-            const tbody = document.getElementById('app-users-list');
-            if (!tbody || !supabaseClient) return;
+        // --- CUADRO DE AUMENTO DIARIO DE LEADS ---
+        function renderDailyGrowthTable() {
+            const tbody = document.getElementById('daily-growth-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
 
-            try {
-                const { data, error } = await supabaseClient
-                    .from('app_users')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+            const countsByDate = {};
+            leadsData.forEach(l => {
+                if (l.fecha) countsByDate[l.fecha] = (countsByDate[l.fecha] || 0) + 1;
+            });
 
-                if (error || !data) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-slate-400">No se pudieron cargar los usuarios.</td></tr>`;
-                    return;
+            const sortedDates = Object.keys(countsByDate).sort();
+
+            if (sortedDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Sin datos de registros diarios.</td></tr>`;
+                return;
+            }
+
+            let previousCount = 0;
+
+            sortedDates.forEach((date, index) => {
+                const currentCount = countsByDate[date];
+                const diff = index === 0 ? currentCount : currentCount - previousCount;
+                let pct = 0;
+                
+                if (index > 0 && previousCount > 0) {
+                    pct = ((diff / previousCount) * 100).toFixed(1);
                 }
 
-                if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-slate-400">Sin usuarios registrados aún.</td></tr>`;
-                    return;
+                let badgeColor = 'text-slate-600 bg-slate-100 border-slate-200';
+                let icon = 'minus';
+                
+                if (diff > 0) {
+                    badgeColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+                    icon = 'trending-up';
+                } else if (diff < 0) {
+                    badgeColor = 'text-rose-700 bg-rose-50 border-rose-200';
+                    icon = 'trending-down';
                 }
 
-                tbody.innerHTML = data.map(u => `
+                const row = `
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="p-2.5 font-bold text-slate-700">${u.name || '-'}</td>
-                        <td class="p-2.5 font-mono text-slate-600">${u.username || '-'}</td>
-                        <td class="p-2.5">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-bold border ${u.role === 'SUPER_ADMIN' ? 'bg-amber-50 text-amber-800 border-amber-200' : u.role === 'CARGA' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}">
-                                ${u.role}
+                        <td class="p-3.5 font-mono font-bold text-slate-700">${date}</td>
+                        <td class="p-3.5 text-center font-bold text-slate-800">${currentCount} leads</td>
+                        <td class="p-3.5 text-center">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-extrabold ${badgeColor}">
+                                <i data-lucide="${icon}" class="w-3 h-3"></i>
+                                ${diff > 0 ? '+' : ''}${diff} leads
                             </span>
                         </td>
+                        <td class="p-3.5 text-center font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                            ${index === 0 ? 'Base Inicial' : `${diff > 0 ? '+' : ''}${pct}%`}
+                        </td>
                     </tr>
-                `).join('');
-            } catch(e) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-slate-400">Error al consultar usuarios.</td></tr>`;
-            }
+                `;
+                tbody.innerHTML += row;
+                previousCount = currentCount;
+            });
         }
 
-        async function handleRegisterUser(e) {
-            e.preventDefault();
-            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
-                showToast('Sólo el Super Administrador tiene permiso para registrar usuarios.', 'error');
+        // --- TABLA PRINCIPAL DE REGISTROS DE LEADS ---
+        function toggleFilterUrgentes() {
+            filterOnlyUrgentes = !filterOnlyUrgentes;
+            const btn = document.getElementById('btn-filter-urgente');
+            if (filterOnlyUrgentes) {
+                btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-rose-600 text-white border-rose-700 shadow-md";
+            } else {
+                btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-50 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700";
+            }
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('leads-table-body');
+            if (!tbody) return;
+
+            const searchElem = document.getElementById('search-input');
+            const search = searchElem ? searchElem.value.toLowerCase() : '';
+            tbody.innerHTML = '';
+
+            let filtered = leadsData.filter(l => {
+                const matchSearch = l.nombre.toLowerCase().includes(search) || 
+                                    (l.cedula && l.cedula.includes(search)) || 
+                                    (l.carrera && l.carrera.toLowerCase().includes(search));
+                const matchUrgente = filterOnlyUrgentes ? l.urgente === true : true;
+                return matchSearch && matchUrgente;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">No se encontraron leads con los criterios ingresados.</td></tr>`;
                 return;
             }
 
-            const name = document.getElementById('reg-name').value.trim();
-            const username = document.getElementById('reg-username').value.trim().toLowerCase();
-            const role = document.getElementById('reg-role').value;
+            // Ordenar urgentes primero, luego fecha
+            filtered.sort((a,b) => (b.urgente ? 1 : 0) - (a.urgente ? 1 : 0));
 
-            if (!supabaseClient) {
-                showToast('Supabase no está conectado. No se puede registrar.', 'error');
-                return;
-            }
+            filtered.forEach(l => {
+                let badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                if(l.tipo === 'MEL') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                if(l.tipo === 'POS') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
 
-            try {
-                const { error } = await supabaseClient
-                    .from('app_users')
-                    .insert([{ name, username, role }]);
+                const phoneClean = l.telefono ? l.telefono.replace(/\D/g, '') : '';
+                const waUrl = phoneClean ? `https://wa.me/593${phoneClean.startsWith('0') ? phoneClean.substring(1) : phoneClean}` : '#';
 
-                if (error) {
-                    showToast(`Error al registrar: ${error.message}`, 'error');
-                } else {
-                    showToast('Usuario creado con éxito en Supabase.', 'success');
-                    document.getElementById('reg-name').value = '';
-                    document.getElementById('reg-username').value = '';
-                    document.getElementById('reg-password').value = '';
-                    fetchAppUsersFromSupabase();
-                }
-            } catch (err) {
-                showToast('Error de conexión al registrar usuario.', 'error');
-            }
+                const rowBg = l.urgente ? 'bg-rose-50/50 hover:bg-rose-100/50 border-l-4 border-l-rose-600' : 'hover:bg-slate-50';
+
+                const row = `
+                    <tr class="${rowBg} transition-colors">
+                        <td class="p-3">
+                            <button onclick="toggleUrgente('${l.id}', ${l.urgente})" class="p-1 rounded-lg border transition-all ${l.urgente ? 'bg-rose-600 text-white border-rose-700 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200 hover:text-rose-600'}" title="Marcar/Desmarcar Urgente">
+                                <i data-lucide="siren" class="w-4 h-4 ${l.urgente ? 'animate-pulse' : ''}"></i>
+                            </button>
+                        </td>
+                        <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${l.fecha || '-'}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                ${l.nombre}
+                                ${phoneClean ? `<a href="${waUrl}" target="_blank" class="text-emerald-600 hover:text-emerald-700"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a>` : ''}
+                            </div>
+                            <div class="text-[10px] text-slate-400">${l.correo || 'Sin correo'}</div>
+                        </td>
+                        <td class="p-3 font-mono text-xs">${l.cedula || '-'}</td>
+                        <td class="p-3 text-slate-700 font-semibold">${l.carrera}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-extrabold border uppercase ${badgeClass}">${l.tipo}</span>
+                        </td>
+                        <td class="p-3 text-slate-600">${l.promotor}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openBitacoraModal('${l.id}', '${l.nombre.replace(/'/g, "\\'")}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-[10px] font-bold flex items-center gap-1 mx-auto transition-all">
+                                <i data-lucide="notebook" class="w-3 h-3"></i> Bitácora
+                            </button>
+                        </td>
+                        <td class="p-3 text-center">
+                            ${currentUser && currentUser.role === 'SUPER_ADMIN' ? `
+                                <button onclick="deleteLead('${l.id}')" class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors" title="Eliminar Lead">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            ` : '<span class="text-slate-300">-</span>'}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
         }
 
         // --- EXPORTACIÓN A EXCEL ---
         function exportToExcel() {
-            if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && currentUser.role !== 'VISOR')) {
-                showToast('No posee permisos para descargar el reporte.', 'error');
-                return;
-            }
-
             let tableHTML = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
             <head><meta charset="UTF-8"></head>
             <body>
-                <h2>UTPL Centro Manta - Reporte General de Leads</h2>
+                <h2>UTPL Centro Manta - Reporte Oficial de Leads</h2>
                 <table border="1">
                     <thead>
-                        <tr style="background-color: #0c2340; color: #ffffff;">
+                        <tr style="background-color: #0c2340; color: #ffffff; font-weight: bold;">
                             <th>Fecha</th>
                             <th>Urgente</th>
                             <th>Estudiante</th>
@@ -1047,27 +1300,25 @@
                             <th>Correo</th>
                             <th>Carrera</th>
                             <th>Tipo</th>
-                            <th>Interés</th>
                             <th>Promotor</th>
                             <th>Bitácora / Observaciones</th>
                         </tr>
                     </thead>
                     <tbody>`;
-            
+
             leadsData.forEach(item => {
                 tableHTML += `
                     <tr>
                         <td>${item.fecha || ''}</td>
-                        <td style="color:${item.es_urgente ? 'red' : 'black'}; font-weight:bold;">${item.es_urgente ? 'SÍ (URGENTE)' : 'No'}</td>
+                        <td>${item.urgente ? 'SI' : 'NO'}</td>
                         <td>${item.nombre || ''}</td>
                         <td style="mso-number-format:'@'">${item.cedula || ''}</td>
                         <td style="mso-number-format:'@'">${item.telefono || ''}</td>
                         <td>${item.correo || ''}</td>
                         <td>${item.carrera || ''}</td>
                         <td>${item.tipo || ''}</td>
-                        <td>${item.nivel_interes || ''}</td>
                         <td>${item.promotor || ''}</td>
-                        <td>${item.observaciones || ''}</td>
+                        <td>${(item.observaciones || '').replace(/\n/g, ' | ')}</td>
                     </tr>`;
             });
 
