@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTPL Centro Manta - Sistema de Leads Supabase</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-900 min-h-screen flex flex-col">
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-view" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-6">
+                <div class="inline-flex bg-blue-900 text-amber-400 p-4 rounded-2xl shadow-lg mb-3">
+                    <i data-lucide="graduation-cap" class="w-10 h-10"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">UTPL - Centro Manta</h1>
+                <p class="text-xs text-slate-500 mt-1 font-medium">Sistema Integrado de Control de Leads</p>
+            </div>
+
+            <!-- FORMULARIO DE LOGIN EXCLUSIVO -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usuario</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="login-username" required placeholder="Ej: admin" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-xs font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-xs font-medium">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
+                    <i data-lucide="log-in" class="w-4 h-4"></i> Acceder al Sistema
+                </button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                <span class="text-[11px] text-slate-400">Acceso exclusivo para personal autorizado UTPL</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION DASHBOARD -->
+    <div id="app-view" class="hidden flex-1 flex flex-col">
+        <header class="bg-blue-950 text-white sticky top-0 z-30 shadow-md border-b border-blue-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-amber-400 text-blue-950 p-2 rounded-xl font-bold shadow">
+                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold flex items-center gap-2">
+                            UTPL Centro Manta 
+                            <span class="text-[10px] font-bold bg-blue-900 px-2 py-0.5 rounded-full text-amber-300 border border-blue-800" id="user-role-badge">SUPER_ADMIN</span>
+                        </h1>
+                        <p class="text-[11px] text-blue-300 font-medium" id="user-display-name">Conectado</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-manage-users" onclick="openUserModal()" class="hidden flex items-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm border border-blue-800" title="Gestión de Usuarios">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Gestión Usuarios</span>
+                    </button>
+                    <button id="btn-export-excel" onclick="exportToExcel()" class="hidden flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Exportar Excel</span>
+                    </button>
+                    <button onclick="handleLogout()" class="p-2 text-blue-300 hover:text-white hover:bg-blue-900 rounded-xl transition-colors" title="Cerrar Sesión">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+
+            <!-- SECCIÓN 1: FORMULARIO DE REGISTRO DE LEADS -->
+            <section id="section-form" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="p-2 bg-blue-50 text-blue-900 rounded-xl">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Registro Diario de Leads</h2>
+                        <p class="text-[11px] text-slate-400">Ingresa los datos del prospecto institucional</p>
+                    </div>
+                </div>
+
+                <form id="lead-form" onsubmit="saveLead(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Fecha</label>
+                        <input type="date" id="lead-fecha" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nombres y Apellidos</label>
+                        <input type="text" id="lead-nombre" required placeholder="Ej. María Zambrano" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Cédula / Identificación</label>
+                        <input type="text" id="lead-cedula" oninput="checkDuplicateCedula(this.value)" required placeholder="1312345678" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                        <div id="duplicate-warning" class="hidden text-[10px] text-amber-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i> ¡Esta cédula ya fue registrada antes!
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Teléfono / WhatsApp</label>
+                        <input type="text" id="lead-telefono" placeholder="0991234567" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Correo Electrónico</label>
+                        <input type="email" id="lead-correo" placeholder="correo@ejemplo.com" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Carrera de Interés</label>
+                        <input type="text" id="lead-carrera" required placeholder="Ej. Psicología / Computación" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Tipo de Oferta</label>
+                        <select id="lead-tipo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                            <option value="TEC">Tecnología Superior (TEC)</option>
+                            <option value="MEL">Grado / Licenciatura (MEL)</option>
+                            <option value="POS">Posgrado / Maestría (POS)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nivel de Interés</label>
+                        <select id="lead-interes" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                            <option value="ALTO">Alto (Muy interesado / Cierre próximo)</option>
+                            <option value="MEDIO" selected>Medio (Evaluando opciones)</option>
+                            <option value="BAJO">Bajo (Frío / Indeciso)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Atención Inmediata</label>
+                        <label class="flex items-center gap-2 cursor-pointer px-3 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 transition-colors">
+                            <input type="checkbox" id="lead-urgente" class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer">
+                            <i data-lucide="siren" class="w-4 h-4 text-rose-600 animate-pulse"></i>
+                            <span>Marcar Lead URGENTE</span>
+                        </label>
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-4 flex items-center justify-between pt-2">
+                        <div class="text-xs text-slate-400 font-medium">
+                            Promotor Asignado: <span id="current-promotor-label" class="font-bold text-slate-700">-</span>
+                        </div>
+                        <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 text-xs">
+                            <i data-lucide="save" class="w-4 h-4"></i> Guardar Lead en Supabase
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- SECCIÓN 2: TARJETAS DE MÉTRICAS -->
+            <section class="grid grid-cols-2 md:grid-cols-5 gap-4" id="stats-summary"></section>
+
+            <!-- SECCIÓN 3: GRÁFICOS ANALÍTICOS (Chart.js) -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-900"></i> Top Carreras Más Solicitadas
+                        </h3>
+                    </div>
+                    <div class="h-64 relative">
+                        <canvas id="carrerasChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-4">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-900"></i> Oferta Académica
+                        </h3>
+                        <div class="h-48 relative flex items-center justify-center">
+                            <canvas id="tipoChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-slate-400 text-center pt-2 border-t border-slate-100">
+                        Distribución porcentual en tiempo real
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 4: CUADRO DE AUMENTO POR DÍA -->
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600"></i> Cuadro de Aumento por Día
+                        </h3>
+                        <p class="text-xs text-slate-400">Variación e incremento comparativo de leads diarios</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase">
+                            <tr>
+                                <th class="p-3">Fecha</th>
+                                <th class="p-3 text-center">Total Leads</th>
+                                <th class="p-3 text-center">Aumento Neto</th>
+                                <th class="p-3 text-center">Crecimiento (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-growth-table" class="divide-y divide-slate-100 bg-white"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 5: TABLA DE LEADS CON BITÁCORA Y WHATSAPP -->
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i data-lucide="list" class="w-4 h-4 text-blue-900"></i> Listado General de Leads
+                        </h3>
+                        <p class="text-xs text-slate-400">Gestiona contactos, estado de seguimiento y bitácoras</p>
+                    </div>
+                    <div class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-2">
+                        <button id="btn-filter-urgente" onclick="toggleUrgentFilter()" class="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200">
+                            <i data-lucide="siren" class="w-4 h-4 text-rose-600"></i>
+                            <span>Ver Solo Urgentes</span>
+                            <span id="urgent-badge-count" class="hidden bg-rose-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                        </button>
+                        <div class="w-full sm:w-72 relative">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="search-input" oninput="renderTable()" placeholder="Buscar por nombre, cédula, carrera..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase">
+                            <tr>
+                                <th class="p-3">Fecha</th>
+                                <th class="p-3">Estudiante</th>
+                                <th class="p-3">Contacto</th>
+                                <th class="p-3">Carrera / Tipo</th>
+                                <th class="p-3">Interés</th>
+                                <th class="p-3">Promotor</th>
+                                <th class="p-3 text-center">Bitácora</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-table-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL DE BITÁCORA / COMENTARIOS -->
+    <div id="bitacora-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full border border-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-sm">Bitácora de Seguimiento</h3>
+                    <p class="text-[11px] text-slate-400" id="bitacora-lead-subtitle">Estudiante</p>
+                </div>
+                <button onclick="closeBitacoraModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="bitacora-history" class="space-y-2 max-h-48 overflow-y-auto mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                <!-- Dinámico -->
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Agregar Comentario / Observación</label>
+                    <textarea id="new-comment-text" rows="3" placeholder="Ej. Se contactó por llamada, mostró interés en beca..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeBitacoraModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Cerrar</button>
+                    <button onclick="saveNewComment()" class="px-4 py-2 bg-blue-900 text-white rounded-xl text-xs font-bold flex items-center gap-1">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Guardar Nota
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE GESTIÓN DE USUARIOS (SÓLO SUPER_ADMIN) -->
+    <div id="user-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-blue-100 text-blue-900 rounded-xl">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm">Gestión de Usuarios</h3>
+                        <p class="text-xs text-slate-400">Creación y consulta de personal del sistema</p>
+                    </div>
+                </div>
+                <button onclick="closeUserModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO DE USUARIOS -->
+            <form id="admin-register-form" onsubmit="handleRegisterUser(event)" class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <h4 class="text-xs font-bold uppercase text-slate-700 mb-2 flex items-center gap-1.5">
+                    <i data-lucide="user-plus" class="w-4 h-4 text-blue-900"></i> Registrar Nuevo Usuario
+                </h4>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Nombre Completo</label>
+                    <input type="text" id="reg-name" required placeholder="Ej. Juan Pérez" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Nombre de Usuario (Login)</label>
+                    <input type="text" id="reg-username" required placeholder="Ej. juanp" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Contraseña</label>
+                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Rol Asignado</label>
+                    <select id="reg-role" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="CARGA">Operador (Ingreso de Datos & Bitácora)</option>
+                        <option value="VISOR">Visualizador (Gráficos y Exportación)</option>
+                        <option value="SUPER_ADMIN">Super Administrador (Acceso Total)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs">
+                    <i data-lucide="user-check" class="w-4 h-4"></i> Guardar Usuario en Supabase
+                </button>
+            </form>
+
+            <!-- LISTADO DE USUARIOS EN SUPABASE -->
+            <div>
+                <h4 class="text-xs font-bold uppercase text-slate-700 mb-2 flex items-center gap-1.5">
+                    <i data-lucide="shield" class="w-4 h-4 text-blue-900"></i> Usuarios Registrados
+                </h4>
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase">
+                            <tr>
+                                <th class="p-2.5">Nombre</th>
+                                <th class="p-2.5">Usuario</th>
+                                <th class="p-2.5">Rol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="app-users-list" class="divide-y divide-slate-100 bg-white">
+                            <!-- Dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Supabase proporcionada por el usuario
+        const SUPABASE_URL = 'https://hjlsudhspfbwoualdkea.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_8jqhwZkSvDjk3GT9ln7CWw_frhhM7xo';
+        
+        let supabaseClient = null;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error('Error inicializando Supabase:', e);
+        }
+
+        let currentUser = JSON.parse(sessionStorage.getItem('utpl_manta_session')) || null;
+        let leadsData = [];
+        let carrerasChartInstance = null;
+        let tipoChartInstance = null;
+        let activeLeadIdForBitacora = null;
+        let filterOnlyUrgentes = false;
+
+        // Interceptar errores de WebSockets en entornos sandbox
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('WebSocket')) {
+                e.preventDefault();
+                return true;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            document.getElementById('lead-fecha').value = new Date().toISOString().split('T')[0];
+
+            if (currentUser) {
+                showApp();
+            }
+
+            // Fallback de sincronización periódica HTTP (cada 10 segundos)
+            setInterval(() => {
+                if (currentUser && supabaseClient) {
+                    fetchLeadsFromSupabase(false);
+                }
+            }, 10000);
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-bold text-white flex items-center gap-2 animate-fade-in ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-triangle'}" class="w-4 h-4"></i> ${message}`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('login-password').value.trim();
+
+            // Cuenta por defecto Super Admin (por si la tabla app_users está vacía)
+            if (usernameInput === 'admin' && passwordInput === 'admin') {
+                currentUser = { name: 'Super Administrador', username: 'admin', role: 'SUPER_ADMIN' };
+                sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
+                showApp();
+                showToast('Bienvenido, Super Administrador', 'success');
+                return;
+            }
+
+            if (!supabaseClient) {
+                showToast('Error de conexión con Supabase.', 'error');
+                return;
+            }
+
+            try {
+                // Consultar en la tabla app_users de Supabase
+                const { data, error } = await supabaseClient
+                    .from('app_users')
+                    .select('*')
+                    .eq('username', usernameInput)
+                    .single();
+
+                if (error || !data) {
+                    showToast('Usuario o contraseña incorrectos.', 'error');
+                    return;
+                }
+
+                // Autenticación exitosa
+                currentUser = { name: data.name, username: data.username, role: data.role };
+                sessionStorage.setItem('utpl_manta_session', JSON.stringify(currentUser));
+                showApp();
+                showToast(`Sesión iniciada como ${data.name}`, 'success');
+
+            } catch (err) {
+                console.error(err);
+                showToast('Error al autenticar con Supabase.', 'error');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('utpl_manta_session');
+            currentUser = null;
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+
+            const role = currentUser.role;
+            document.getElementById('user-role-badge').textContent = role;
+            document.getElementById('user-display-name').textContent = currentUser.name;
+            document.getElementById('current-promotor-label').textContent = currentUser.name;
+
+            // Permisos por roles
+            const formSec = document.getElementById('section-form');
+            if (role === 'SUPER_ADMIN' || role === 'CARGA') {
+                formSec.classList.remove('hidden');
+            } else {
+                formSec.classList.add('hidden');
+            }
+
+            const btnExcel = document.getElementById('btn-export-excel');
+            if (role === 'SUPER_ADMIN' || role === 'VISOR') {
+                btnExcel.classList.remove('hidden');
+            } else {
+                btnExcel.classList.add('hidden');
+            }
+
+            const btnUsers = document.getElementById('btn-manage-users');
+            if (role === 'SUPER_ADMIN') {
+                btnUsers.classList.remove('hidden');
+            } else {
+                btnUsers.classList.add('hidden');
+            }
+
+            fetchLeadsFromSupabase();
+        }
+
+        function checkDuplicateCedula(cedula) {
+            const warning = document.getElementById('duplicate-warning');
+            if (!cedula || cedula.length < 5) {
+                warning.classList.add('hidden');
+                return;
+            }
+            const exists = leadsData.some(l => l.cedula === cedula.trim());
+            if (exists) {
+                warning.classList.remove('hidden');
+            } else {
+                warning.classList.add('hidden');
+            }
+        }
+
+        async function fetchLeadsFromSupabase(showLoader = true) {
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('leads')
+                    .select('*')
+                    .order('fecha', { ascending: false });
+
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+
+                leadsData = data || [];
+                updateDashboard();
+            } catch (err) {
+                console.error('Error fetching leads:', err);
+            }
+        }
+
+        async function saveLead(e) {
+            e.preventDefault();
+            if (!supabaseClient) return;
+
+            const isUrgent = document.getElementById('lead-urgente').checked;
+
+            const newLead = {
+                fecha: document.getElementById('lead-fecha').value,
+                nombre: document.getElementById('lead-nombre').value.trim(),
+                cedula: document.getElementById('lead-cedula').value.trim(),
+                telefono: document.getElementById('lead-telefono').value.trim(),
+                correo: document.getElementById('lead-correo').value.trim(),
+                carrera: document.getElementById('lead-carrera').value.trim(),
+                tipo: document.getElementById('lead-tipo').value,
+                nivel_interes: document.getElementById('lead-interes').value,
+                es_urgente: isUrgent,
+                promotor: currentUser.name,
+                observaciones: `Registro inicial por ${currentUser.name}${isUrgent ? ' 🚨 [MARCADO COMO URGENTE DE ATENCIÓN INMEDIATA]' : ''}`
+            };
+
+            try {
+                const { error } = await supabaseClient.from('leads').insert([newLead]);
+                if (error) {
+                    showToast(`Error al guardar: ${error.message}`, 'error');
+                } else {
+                    showToast(isUrgent ? '🚨 Lead URGENTE registrado con éxito' : 'Lead guardado exitosamente en Supabase', 'success');
+                    document.getElementById('lead-nombre').value = '';
+                    document.getElementById('lead-cedula').value = '';
+                    document.getElementById('lead-telefono').value = '';
+                    document.getElementById('lead-correo').value = '';
+                    document.getElementById('lead-carrera').value = '';
+                    document.getElementById('lead-urgente').checked = false;
+                    document.getElementById('duplicate-warning').classList.add('hidden');
+                    fetchLeadsFromSupabase(false);
+                }
+            } catch (err) {
+                showToast('Error de conexión al guardar lead.', 'error');
+            }
+        }
+
+        async function toggleUrgentStatus(id, currentStatus) {
+            if (!supabaseClient) return;
+            const newStatus = !currentStatus;
+            try {
+                const { error } = await supabaseClient
+                    .from('leads')
+                    .update({ es_urgente: newStatus })
+                    .eq('id', id);
+
+                if (error) {
+                    showToast(`Error al actualizar estado urgente: ${error.message}`, 'error');
+                } else {
+                    showToast(newStatus ? '🚨 Lead marcado como URGENTE' : 'Marcador URGENTE removido', 'success');
+                    fetchLeadsFromSupabase(false);
+                }
+            } catch (e) {
+                showToast('Error de conexión al cambiar urgencia.', 'error');
+            }
+        }
+
+        function toggleUrgentFilter() {
+            filterOnlyUrgentes = !filterOnlyUrgentes;
+            const btn = document.getElementById('btn-filter-urgente');
+            if (filterOnlyUrgentes) {
+                btn.className = "w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-rose-600 text-white border-rose-700 shadow-md";
+            } else {
+                btn.className = "w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200";
+            }
+            renderTable();
+        }
+
+        async function deleteLead(id) {
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+                showToast('Solo el Super Administrador puede eliminar registros.', 'error');
+                return;
+            }
+            if (!supabaseClient) return;
+
+            try {
+                const { error } = await supabaseClient.from('leads').delete().eq('id', id);
+                if (error) {
+                    showToast(`Error al eliminar: ${error.message}`, 'error');
+                } else {
+                    showToast('Lead eliminado correctamente.', 'success');
+                    fetchLeadsFromSupabase(false);
+                }
+            } catch (e) {
+                showToast('Error al procesar eliminación.', 'error');
+            }
+        }
+
+        function updateDashboard() {
+            renderStats();
+            renderCharts();
+            renderDailyGrowthTable();
+            renderTable();
+            lucide.createIcons();
+        }
+
+        function renderStats() {
+            const container = document.getElementById('stats-summary');
+            const total = leadsData.length;
+            const tec = leadsData.filter(l => l.tipo === 'TEC').length;
+            const mel = leadsData.filter(l => l.tipo === 'MEL').length;
+            const pos = leadsData.filter(l => l.tipo === 'POS').length;
+            const urgentes = leadsData.filter(l => l.es_urgente).length;
+
+            const urgentBadgeCount = document.getElementById('urgent-badge-count');
+            if (urgentBadgeCount) {
+                urgentBadgeCount.textContent = urgentes;
+                if (urgentes > 0) urgentBadgeCount.classList.remove('hidden');
+                else urgentBadgeCount.classList.add('hidden');
+            }
+
+            container.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Total Leads</p><h3 class="text-2xl font-bold text-slate-800">${total}</h3></div>
+                    <div class="p-3 bg-blue-50 text-blue-900 rounded-xl"><i data-lucide="users" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border ${urgentes > 0 ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200'} shadow-sm flex items-center justify-between cursor-pointer" onclick="toggleUrgentFilter()">
+                    <div>
+                        <p class="text-[11px] ${urgentes > 0 ? 'text-rose-600 font-extrabold' : 'text-slate-400 font-bold'} uppercase flex items-center gap-1">
+                            ${urgentes > 0 ? '<span class="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span>' : ''} Urgentes
+                        </p>
+                        <h3 class="text-2xl font-bold ${urgentes > 0 ? 'text-rose-600' : 'text-slate-800'}">${urgentes}</h3>
+                    </div>
+                    <div class="p-3 ${urgentes > 0 ? 'bg-rose-600 text-white shadow-md shadow-rose-200 animate-bounce' : 'bg-rose-50 text-rose-600'} rounded-xl">
+                        <i data-lucide="siren" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Tecnologías (TEC)</p><h3 class="text-2xl font-bold text-blue-600">${tec}</h3></div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="book-open" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Grado (MEL)</p><h3 class="text-2xl font-bold text-amber-600">${mel}</h3></div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="graduation-cap" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div><p class="text-[11px] text-slate-400 font-bold uppercase">Posgrados (POS)</p><h3 class="text-2xl font-bold text-purple-600">${pos}</h3></div>
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="award" class="w-6 h-6"></i></div>
+                </div>
+            `;
+        }
+
+        function renderCharts() {
+            // Top Carreras
+            const carreraCounts = {};
+            leadsData.forEach(l => {
+                if (l.carrera) {
+                    const c = l.carrera.trim();
+                    carreraCounts[c] = (carreraCounts[c] || 0) + 1;
+                }
+            });
+            const sortedCarreras = Object.entries(carreraCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            const carrerasLabels = sortedCarreras.map(i => i[0]);
+            const carrerasValues = sortedCarreras.map(i => i[1]);
+
+            const ctx1 = document.getElementById('carrerasChart').getContext('2d');
+            if (carrerasChartInstance) carrerasChartInstance.destroy();
+            carrerasChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: carrerasLabels.length ? carrerasLabels : ['Sin registros'],
+                    datasets: [{
+                        label: 'Leads por Carrera',
+                        data: carrerasValues.length ? carrerasValues : [0],
+                        backgroundColor: '#1e3a8a',
+                        borderRadius: 8
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Tipo Oferta
+            const tec = leadsData.filter(l => l.tipo === 'TEC').length;
+            const mel = leadsData.filter(l => l.tipo === 'MEL').length;
+            const pos = leadsData.filter(l => l.tipo === 'POS').length;
+
+            const ctx2 = document.getElementById('tipoChart').getContext('2d');
+            if (tipoChartInstance) tipoChartInstance.destroy();
+            tipoChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['TEC', 'Grado', 'Posgrado'],
+                    datasets: [{
+                        data: [tec, mel, pos],
+                        backgroundColor: ['#2563eb', '#d97706', '#9333ea'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
+            });
+        }
+
+        function renderDailyGrowthTable() {
+            const tbody = document.getElementById('daily-growth-table');
+            tbody.innerHTML = '';
+
+            const countsByDate = {};
+            leadsData.forEach(l => {
+                if (l.fecha) {
+                    countsByDate[l.fecha] = (countsByDate[l.fecha] || 0) + 1;
+                }
+            });
+
+            const sortedDates = Object.keys(countsByDate).sort();
+            if (sortedDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Sin datos registrados.</td></tr>`;
+                return;
+            }
+
+            let prevCount = 0;
+            sortedDates.forEach((date, idx) => {
+                const currentCount = countsByDate[date];
+                const diff = idx === 0 ? currentCount : currentCount - prevCount;
+                let pct = 0;
+                if (idx > 0 && prevCount > 0) {
+                    pct = ((diff / prevCount) * 100).toFixed(1);
+                }
+
+                let badgeColor = 'text-slate-600 bg-slate-100';
+                let icon = 'minus';
+                if (diff > 0) {
+                    badgeColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+                    icon = 'trending-up';
+                } else if (diff < 0) {
+                    badgeColor = 'text-red-700 bg-red-50 border-red-200';
+                    icon = 'trending-down';
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3 font-mono font-bold text-slate-700">${date}</td>
+                        <td class="p-3 text-center font-bold text-slate-800">${currentCount} leads</td>
+                        <td class="p-3 text-center">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${badgeColor}">
+                                <i data-lucide="${icon}" class="w-3 h-3"></i> ${diff > 0 ? '+' : ''}${diff}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}">
+                            ${idx === 0 ? 'Base Inicial' : `${diff > 0 ? '+' : ''}${pct}%`}
+                        </td>
+                    </tr>
+                `;
+                prevCount = currentCount;
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('leads-table-body');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            let filtered = leadsData.filter(l => 
+                (l.nombre && l.nombre.toLowerCase().includes(search)) || 
+                (l.cedula && l.cedula.includes(search)) || 
+                (l.carrera && l.carrera.toLowerCase().includes(search)) ||
+                (l.promotor && l.promotor.toLowerCase().includes(search))
+            );
+
+            if (filterOnlyUrgentes) {
+                filtered = filtered.filter(l => l.es_urgente);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">No se encontraron registros ${filterOnlyUrgentes ? 'urgentes' : ''}.</td></tr>`;
+                return;
+            }
+
+            filtered.sort((a, b) => {
+                // Colocar siempre los urgentes primero si no se está filtrando sólo urgentes
+                if (a.es_urgente !== b.es_urgente) return b.es_urgente ? 1 : -1;
+                return new Date(b.fecha) - new Date(a.fecha);
+            });
+
+            filtered.forEach(l => {
+                let badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                if (l.tipo === 'MEL') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                if (l.tipo === 'POS') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
+
+                let interesBadge = 'bg-slate-100 text-slate-700';
+                if (l.nivel_interes === 'ALTO') interesBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                else if (l.nivel_interes === 'BAJO') interesBadge = 'bg-rose-50 text-rose-700 border-rose-200';
+
+                // WhatsApp Link
+                const cleanPhone = l.telefono ? l.telefono.replace(/\D/g, '') : '';
+                const waLink = cleanPhone ? `https://wa.me/593${cleanPhone.startsWith('0') ? cleanPhone.slice(1) : cleanPhone}?text=Hola%20${encodeURIComponent(l.nombre)},%20te%20escribimos%20desde%20la%20UTPL%20Centro%20Manta...` : '#';
+
+                const canDelete = currentUser.role === 'SUPER_ADMIN';
+                const isUrgent = !!l.es_urgente;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors ${isUrgent ? 'bg-rose-50/40 border-l-4 border-l-rose-500' : ''}">
+                        <td class="p-3 font-mono text-xs text-slate-500 whitespace-nowrap">
+                            ${l.fecha}
+                            ${isUrgent ? '<div class="mt-1"><span class="inline-flex items-center gap-1 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse"><i data-lucide="siren" class="w-3 h-3"></i> URGENTE</span></div>' : ''}
+                        </td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                ${l.nombre}
+                            </div>
+                            <div class="text-[10px] text-slate-400">CI: ${l.cedula}</div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-mono text-xs">${l.telefono || '-'}</div>
+                            ${cleanPhone ? `<a href="${waLink}" target="_blank" class="text-[10px] text-emerald-600 font-bold hover:underline flex items-center gap-1 mt-0.5"><i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp</a>` : ''}
+                        </td>
+                        <td class="p-3">
+                            <div class="text-slate-700 font-medium">${l.carrera}</div>
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold border uppercase inline-block mt-0.5 ${badgeClass}">${l.tipo}</span>
+                        </td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold border ${interesBadge}">${l.nivel_interes || 'MEDIO'}</span>
+                        </td>
+                        <td class="p-3 text-slate-600 font-medium">${l.promotor}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openBitacoraModal('${l.id}')" class="p-1.5 bg-blue-50 text-blue-900 hover:bg-blue-100 rounded-xl transition-colors" title="Ver / Agregar Bitácora">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="toggleUrgentStatus('${l.id}', ${isUrgent})" class="p-1.5 ${isUrgent ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'} rounded-xl transition-colors" title="${isUrgent ? 'Quitar marcador URGENTE' : 'Marcar como URGENTE'}">
+                                    <i data-lucide="siren" class="w-4 h-4"></i>
+                                </button>
+                                ${canDelete ? `
+                                    <button onclick="deleteLead('${l.id}')" class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors" title="Eliminar">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- GESTIÓN DE BITÁCORA ---
+        function openBitacoraModal(id) {
+            activeLeadIdForBitacora = id;
+            const lead = leadsData.find(l => l.id == id);
+            if (!lead) return;
+
+            document.getElementById('bitacora-lead-subtitle').textContent = `${lead.nombre} (${lead.carrera})`;
+            
+            const historyDiv = document.getElementById('bitacora-history');
+            historyDiv.innerHTML = `<div class="p-2 bg-white rounded-lg border border-slate-200 text-slate-700"><b>Observaciones iniciales:</b> ${lead.observaciones || 'Sin notas registradas.'}</div>`;
+
+            document.getElementById('new-comment-text').value = '';
+            document.getElementById('bitacora-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeBitacoraModal() {
+            document.getElementById('bitacora-modal').classList.add('hidden');
+            activeLeadIdForBitacora = null;
+        }
+
+        async function saveNewComment() {
+            const comment = document.getElementById('new-comment-text').value.trim();
+            if (!comment) {
+                showToast('Escribe un comentario válido.', 'error');
+                return;
+            }
+            if (!supabaseClient || !activeLeadIdForBitacora) return;
+
+            const lead = leadsData.find(l => l.id == activeLeadIdForBitacora);
+            if (!lead) return;
+
+            const updatedObservaciones = `${lead.observaciones || ''}\n[${new Date().toLocaleDateString()} ${currentUser.name}]: ${comment}`;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('leads')
+                    .update({ observaciones: updatedObservaciones })
+                    .eq('id', activeLeadIdForBitacora);
+
+                if (error) {
+                    showToast(`Error al guardar bitácora: ${error.message}`, 'error');
+                } else {
+                    showToast('Bitácora actualizada con éxito.', 'success');
+                    closeBitacoraModal();
+                    fetchLeadsFromSupabase(false);
+                }
+            } catch (e) {
+                showToast('Error de conexión al actualizar bitácora.', 'error');
+            }
+        }
+
+        // --- GESTIÓN DE USUARIOS (SUPER_ADMIN) ---
+        function openUserModal() {
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') return;
+            document.getElementById('user-modal').classList.remove('hidden');
+            fetchAppUsersFromSupabase();
+            lucide.createIcons();
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-modal').classList.add('hidden');
+        }
+
+        async function fetchAppUsersFromSupabase() {
+            const tbody = document.getElementById('app-users-list');
+            if (!tbody || !supabaseClient) return;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('app_users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error || !data) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-slate-400">No se pudieron cargar los usuarios.</td></tr>`;
+                    return;
+                }
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-slate-400">Sin usuarios registrados aún.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(u => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-2.5 font-bold text-slate-700">${u.name || '-'}</td>
+                        <td class="p-2.5 font-mono text-slate-600">${u.username || '-'}</td>
+                        <td class="p-2.5">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold border ${u.role === 'SUPER_ADMIN' ? 'bg-amber-50 text-amber-800 border-amber-200' : u.role === 'CARGA' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}">
+                                ${u.role}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-slate-400">Error al consultar usuarios.</td></tr>`;
+            }
+        }
+
+        async function handleRegisterUser(e) {
+            e.preventDefault();
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+                showToast('Sólo el Super Administrador tiene permiso para registrar usuarios.', 'error');
+                return;
+            }
+
+            const name = document.getElementById('reg-name').value.trim();
+            const username = document.getElementById('reg-username').value.trim().toLowerCase();
+            const role = document.getElementById('reg-role').value;
+
+            if (!supabaseClient) {
+                showToast('Supabase no está conectado. No se puede registrar.', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('app_users')
+                    .insert([{ name, username, role }]);
+
+                if (error) {
+                    showToast(`Error al registrar: ${error.message}`, 'error');
+                } else {
+                    showToast('Usuario creado con éxito en Supabase.', 'success');
+                    document.getElementById('reg-name').value = '';
+                    document.getElementById('reg-username').value = '';
+                    document.getElementById('reg-password').value = '';
+                    fetchAppUsersFromSupabase();
+                }
+            } catch (err) {
+                showToast('Error de conexión al registrar usuario.', 'error');
+            }
+        }
+
+        // --- EXPORTACIÓN A EXCEL ---
+        function exportToExcel() {
+            if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && currentUser.role !== 'VISOR')) {
+                showToast('No posee permisos para descargar el reporte.', 'error');
+                return;
+            }
+
+            let tableHTML = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="UTF-8"></head>
+            <body>
+                <h2>UTPL Centro Manta - Reporte General de Leads</h2>
+                <table border="1">
+                    <thead>
+                        <tr style="background-color: #0c2340; color: #ffffff;">
+                            <th>Fecha</th>
+                            <th>Urgente</th>
+                            <th>Estudiante</th>
+                            <th>Cédula</th>
+                            <th>Teléfono</th>
+                            <th>Correo</th>
+                            <th>Carrera</th>
+                            <th>Tipo</th>
+                            <th>Interés</th>
+                            <th>Promotor</th>
+                            <th>Bitácora / Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            leadsData.forEach(item => {
+                tableHTML += `
+                    <tr>
+                        <td>${item.fecha || ''}</td>
+                        <td style="color:${item.es_urgente ? 'red' : 'black'}; font-weight:bold;">${item.es_urgente ? 'SÍ (URGENTE)' : 'No'}</td>
+                        <td>${item.nombre || ''}</td>
+                        <td style="mso-number-format:'@'">${item.cedula || ''}</td>
+                        <td style="mso-number-format:'@'">${item.telefono || ''}</td>
+                        <td>${item.correo || ''}</td>
+                        <td>${item.carrera || ''}</td>
+                        <td>${item.tipo || ''}</td>
+                        <td>${item.nivel_interes || ''}</td>
+                        <td>${item.promotor || ''}</td>
+                        <td>${item.observaciones || ''}</td>
+                    </tr>`;
+            });
+
+            tableHTML += `</tbody></table></body></html>`;
+
+            const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Reporte_Leads_UTPL_Manta_${new Date().toISOString().split('T')[0]}.xls`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
