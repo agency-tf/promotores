@@ -890,8 +890,8 @@
         // --- DELIMITACIÓN ESTRICTA DE INTERFAZ POR ROL ---
         function switchView(viewName) {
             // Restricción de navegación
-            if (currentUser.role === 'VISOR' && (viewName === 'form' || viewName === 'dashboard')) {
-                viewName = 'leads'; // El visualizador es redirigido a reportes
+            if (currentUser.role === 'VISOR' && viewName === 'form') {
+                viewName = 'dashboard'; // El visualizador es redirigido al panel principal
             }
             if (currentUser.role === 'CARGA' && (viewName === 'growth' || viewName === 'analytics')) {
                 viewName = 'dashboard'; // El operador se enfoca en sus datos
@@ -1030,8 +1030,11 @@
                 `;
 
                 navLinks.innerHTML = `
-                    <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-300 hover:bg-blue-900 hover:text-emerald-200 transition-all">
-                        <i data-lucide="list" class="w-4 h-4"></i> Reporte & Listado General
+                    <button onclick="switchView('dashboard')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-300 hover:bg-blue-900 hover:text-emerald-200 transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard General
+                    </button>
+                    <button onclick="switchView('leads')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
+                        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i> Reporte Detallado
                     </button>
                     <button onclick="switchView('growth')" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-blue-900 hover:text-white transition-all">
                         <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i> Crecimiento por Día
@@ -1046,7 +1049,7 @@
 
                 document.getElementById('sidebar-role-description').textContent = 'Visualizador Ejecutivo';
                 statsScope = 'all';
-                if (activeView === 'dashboard' || activeView === 'form') switchView('leads');
+                if (activeView === 'form') switchView('dashboard');
             }
 
             safeCreateIcons();
@@ -1649,23 +1652,23 @@
             const urgentes = dataset.filter(d => d.urgente).length;
 
             cardsContainer.innerHTML = `
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-400 hover:shadow-md transition-all" onclick="filterAndNavigate('clear', '')" title="Ver todos los leads">
                     <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Total Leads</p><h3 class="text-2xl font-black text-slate-900">${total}</h3></div>
-                    <div class="p-2.5 bg-blue-50 text-blue-900 rounded-xl"><i data-lucide="users" class="w-5 h-5"></i></div>
+                    <div class="p-2.5 bg-slate-50 text-slate-600 rounded-xl"><i data-lucide="users" class="w-5 h-5"></i></div>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-400 hover:shadow-md transition-all" onclick="filterAndNavigate('tipo', 'TEC')" title="Filtrar por Tecnología">
                     <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Tecnología (TEC)</p><h3 class="text-2xl font-black text-blue-600">${tec}</h3></div>
                     <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="book-open" class="w-5 h-5"></i></div>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all" onclick="filterAndNavigate('tipo', 'MEL')" title="Filtrar por Grado">
                     <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Grado (MEL)</p><h3 class="text-2xl font-black text-amber-600">${mel}</h3></div>
                     <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="graduation-cap" class="w-5 h-5"></i></div>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-purple-400 hover:shadow-md transition-all" onclick="filterAndNavigate('tipo', 'POS')" title="Filtrar por Posgrado">
                     <div><p class="text-[10px] text-slate-400 font-extrabold uppercase">Posgrados (POS)</p><h3 class="text-2xl font-black text-purple-600">${pos}</h3></div>
                     <div class="p-2.5 bg-purple-50 text-purple-600 rounded-xl"><i data-lucide="award" class="w-5 h-5"></i></div>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-rose-300" onclick="switchView('urgentes')">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-rose-400 hover:shadow-md transition-all" onclick="switchView('urgentes')" title="Ir a Leads Urgentes">
                     <div><p class="text-[10px] text-rose-600 font-extrabold uppercase">Urgentes</p><h3 class="text-2xl font-black text-rose-600">${urgentes}</h3></div>
                     <div class="p-2.5 bg-rose-50 text-rose-600 rounded-xl"><i data-lucide="siren" class="w-5 h-5"></i></div>
                 </div>
@@ -1676,6 +1679,14 @@
         }
 
         function renderCharts(tec, mel, pos, dataset) {
+            const commonChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                onHover: (event, chartElement) => {
+                    event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                }
+            };
+
             // Chart 1: Oferta
             const ctx1 = document.getElementById('chart-tipo-oferta')?.getContext('2d');
             if (ctx1) {
@@ -1689,7 +1700,16 @@
                             backgroundColor: ['#2563eb', '#d97706', '#9333ea']
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    options: {
+                        ...commonChartOptions,
+                        onClick: (e, activeEls) => {
+                            if (activeEls.length > 0) {
+                                const index = activeEls[0].index;
+                                const label = chartTipo.data.labels[index];
+                                filterAndNavigate('tipo', label);
+                            }
+                        }
+                    }
                 });
             }
 
@@ -1702,6 +1722,8 @@
             const topCarreras = Object.entries(carreraCounts)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
+
+            const fullLabels = topCarreras.map(c => c[0]); // Guardamos el nombre completo para el filtro
 
             const ctx2 = document.getElementById('chart-carreras-top')?.getContext('2d');
             if (ctx2) {
@@ -1716,9 +1738,34 @@
                             backgroundColor: '#0c2340'
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    options: {
+                        ...commonChartOptions,
+                        onClick: (e, activeEls) => {
+                            if (activeEls.length > 0) {
+                                const index = activeEls[0].index;
+                                const label = fullLabels[index];
+                                filterAndNavigate('carrera', label);
+                            }
+                        }
+                    }
                 });
             }
+        }
+
+        // --- NAVEGACIÓN DESDE DASHBOARD A DETALLES (Drill-Down) ---
+        function filterAndNavigate(type, value) {
+            clearAllFilters(); // Reseteamos filtros primero
+
+            if (type === 'tipo') {
+                const tipoSelect = document.getElementById('filter-tipo');
+                if (tipoSelect) tipoSelect.value = value;
+            } else if (type === 'carrera') {
+                const searchInput = document.getElementById('filter-search');
+                if (searchInput) searchInput.value = value;
+            }
+
+            // Cambiamos a la vista de reporte detallado (esto aplicará el filtro y renderizará la tabla)
+            switchView('leads');
         }
 
         // --- CUADRO DE AUMENTO DIARIO ---
