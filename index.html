@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTPL Centro Manta - Sistema de Gestión de Leads</title>
+    <title>UTPL Zona 4 - Sistema de Gestión de Leads</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,8 +51,8 @@
                 <div class="inline-flex bg-gradient-to-tr from-blue-900 to-indigo-900 text-amber-400 p-4 rounded-2xl shadow-xl mb-3 border border-amber-400/30">
                     <i data-lucide="graduation-cap" class="w-10 h-10"></i>
                 </div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight">UTPL Centro Manta</h1>
-                <p class="text-xs text-slate-500 mt-1 font-medium">Sistema Integral de Control de Leads</p>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">UTPL Zona 4</h1>
+                <p class="text-xs text-slate-500 mt-1 font-medium">Sistema Integral de Control y Gestión de Leads</p>
             </div>
 
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
@@ -60,7 +60,7 @@
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usuario</label>
                     <div class="relative">
                         <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="username" required placeholder="Ej. tito, jackson, visor1" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 outline-none text-xs font-bold transition-all">
+                        <input type="text" id="username" required placeholder="Ingresa tu usuario" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-900 outline-none text-xs font-bold transition-all">
                     </div>
                 </div>
 
@@ -78,7 +78,7 @@
             </form>
 
             <div class="mt-8 pt-4 border-t border-slate-100 text-center">
-                <span class="text-[11px] text-slate-400 font-medium">Universidad Técnica Particular de Loja • Manta</span>
+                <span class="text-[11px] text-slate-400 font-medium">Universidad Técnica Particular de Loja • Zona 4</span>
             </div>
         </div>
     </div>
@@ -98,7 +98,7 @@
                     </div>
                     <div>
                         <h1 class="text-sm font-black tracking-tight text-white flex items-center gap-2">
-                            UTPL MANTA
+                            UTPL ZONA 4
                             <span class="text-[10px] font-extrabold bg-blue-900 text-amber-300 px-2 py-0.5 rounded-full border border-blue-700/50 uppercase" id="sidebar-user-role"></span>
                         </h1>
                         <p class="text-[11px] text-slate-300 font-medium" id="sidebar-user-name">Cargando...</p>
@@ -124,7 +124,12 @@
                         <span id="unread-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-blue-950"></span>
                     </button>
 
-                    <!-- Botón Gestión Usuarios (Solo Admin) -->
+                    <!-- Botón Depurar Base de Datos por Fechas (Solo Super Admin) -->
+                    <button id="btn-purge-leads" onclick="openPurgeModal()" class="hidden p-2 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded-xl transition-all" title="Depurar / Eliminar Registros Anteriores">
+                        <i data-lucide="database-backup" class="w-5 h-5"></i>
+                    </button>
+
+                    <!-- Botón Gestión Usuarios (Solo Super Admin) -->
                     <button id="btn-manage-users" onclick="openUserModal()" class="hidden p-2 text-amber-400 hover:text-amber-300 hover:bg-blue-900/60 rounded-xl transition-all" title="Gestión de Usuarios">
                         <i data-lucide="users" class="w-5 h-5"></i>
                     </button>
@@ -174,7 +179,7 @@
                     <i data-lucide="file-text" class="w-4 h-4"></i> Reporte PDF Personalizado
                 </button>
                 <div class="text-center pt-2">
-                    <p class="text-[10px] text-slate-400 font-medium">UTPL Centro Manta v3.0</p>
+                    <p class="text-[10px] text-slate-400 font-medium">UTPL Zona 4 v3.5</p>
                 </div>
             </div>
         </aside>
@@ -197,7 +202,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 w-full md:w-auto justify-end" id="role-quick-pills">
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end" id="role-quick-pills">
                     <!-- Botones rápidos según rol -->
                 </div>
             </div>
@@ -226,7 +231,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-900"></i> Distribución por Oferta
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-900"></i> Distribución por Oferta (Haz clic para filtrar)
                         </h3>
                         <div class="h-52 relative flex items-center justify-center">
                             <canvas id="chart-tipo-oferta"></canvas>
@@ -234,7 +239,7 @@
                     </div>
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-                            <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-500"></i> Top Carreras Solicitadas
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-500"></i> Top Carreras Solicitadas (Haz clic para filtrar)
                         </h3>
                         <div class="h-52 relative flex items-center justify-center">
                             <canvas id="chart-carreras-top"></canvas>
@@ -252,7 +257,7 @@
                         </div>
                         <div>
                             <h2 class="text-base font-extrabold text-slate-900" id="form-title">Registrar Nuevo Lead</h2>
-                            <p class="text-xs text-slate-400">Ingresa los datos del estudiante o prospecto de la UTPL Centro Manta.</p>
+                            <p class="text-xs text-slate-400">Ingresa los datos del estudiante o prospecto de la UTPL Zona 4.</p>
                         </div>
                     </div>
                     <button type="button" onclick="resetFormState()" class="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1">
@@ -315,7 +320,7 @@
                         <select id="lead-nivel-interes" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                             <option value="ALTO">Alto (Muy Interesado)</option>
                             <option value="MEDIO" selected>Medio (En consulta)</option>
-                            <option value="BAJO">Bajo (Boca información)</option>
+                            <option value="BAJO">Bajo (Poca información)</option>
                         </select>
                     </div>
 
@@ -345,6 +350,7 @@
                             <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
                                 <i data-lucide="list" class="w-5 h-5 text-blue-900"></i>
                                 Registros de Leads
+                                <span id="leads-filtered-count" class="bg-blue-100 text-blue-900 text-[11px] px-2.5 py-0.5 rounded-full font-extrabold">0 registros</span>
                             </h2>
                             <p class="text-xs text-slate-400">Consulta de estudiantes prospecto y filtros personalizados.</p>
                         </div>
@@ -555,7 +561,7 @@
             </div>
 
             <div class="p-5 space-y-4">
-                <!-- Formulario de ingreso de notas (Solo para roles con edición/operadores) -->
+                <!-- Formulario de ingreso de notas -->
                 <div id="bitacora-input-section" class="space-y-2">
                     <textarea id="bitacora-note-input" rows="3" placeholder="Escribe un detalle o actualización del prospecto..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-900 resize-none"></textarea>
                     <div class="flex justify-end">
@@ -591,19 +597,19 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 mb-1">Nombre Completo</label>
-                            <input type="text" id="user-input-name" required placeholder="Ej. Jackson" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                            <input type="text" id="user-input-name" required placeholder="Ej. Jackson" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 mb-1">Nombre de Usuario</label>
-                            <input type="text" id="user-input-username" required placeholder="Ej. jackson" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                            <input type="text" id="user-input-username" required placeholder="Ej. jackson" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 mb-1">Contraseña</label>
-                            <input type="password" id="user-input-password" required placeholder="••••••••" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                            <input type="password" id="user-input-password" required placeholder="••••••••" class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 mb-1">Rol / Función</label>
-                            <select id="user-input-role" required class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                            <select id="user-input-role" required class="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-900">
                                 <option value="CARGA">Promotor / Operador (Carga de Datos)</option>
                                 <option value="VISOR">Visualizador (Solo Reportes)</option>
                                 <option value="SUPER_ADMIN">Super Administrador (Control Total)</option>
@@ -613,7 +619,7 @@
 
                     <div class="flex justify-end gap-2 pt-2">
                         <button type="button" onclick="resetUserForm()" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800">Cancelar</button>
-                        <button type="submit" class="bg-blue-900 text-amber-300 px-4 py-1.5 rounded-xl text-xs font-extrabold shadow">
+                        <button type="submit" id="user-submit-btn" class="bg-blue-900 text-amber-300 px-4 py-1.5 rounded-xl text-xs font-extrabold shadow">
                             Guardar Usuario
                         </button>
                     </div>
@@ -694,7 +700,35 @@
         </div>
     </div>
 
-    <!-- MODAL 5: CONFIRMACIÓN INTERACTIVA DE ELIMINACIÓN -->
+    <!-- MODAL 5: VISOR DE CORREO INTERNO -->
+    <div id="modal-read-mail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden fade-in">
+            <div class="bg-blue-950 text-white p-4 flex items-center justify-between">
+                <h3 class="text-sm font-extrabold flex items-center gap-2">
+                    <i data-lucide="mail-open" class="w-4 h-4 text-amber-300"></i> Lectura de Mensaje
+                </h3>
+                <button onclick="closeReadMailModal()" class="text-slate-300 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1 text-xs">
+                    <div class="flex justify-between">
+                        <span class="font-bold text-slate-700" id="read-mail-sender">De:</span>
+                        <span class="text-[10px] text-slate-400" id="read-mail-date"></span>
+                    </div>
+                    <div class="font-black text-blue-950 text-sm" id="read-mail-subject">Asunto</div>
+                </div>
+                <div class="p-4 bg-white border border-slate-200 rounded-2xl text-xs text-slate-700 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto" id="read-mail-body"></div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeReadMailModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">Cerrar</button>
+                    <button id="btn-reply-mail" class="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-amber-300 font-extrabold rounded-xl text-xs flex items-center gap-1.5 shadow">
+                        <i data-lucide="reply" class="w-3.5 h-3.5"></i> Responder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: CONFIRMACIÓN INTERACTIVA DE ELIMINACIÓN -->
     <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full border border-slate-200 p-5 text-center space-y-4 fade-in">
             <div class="p-3 bg-rose-100 text-rose-600 rounded-full w-12 h-12 mx-auto flex items-center justify-center">
@@ -708,6 +742,79 @@
                 <button onclick="closeConfirmModal(false)" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-200">Cancelar</button>
                 <button id="confirm-modal-btn" onclick="closeConfirmModal(true)" class="px-4 py-2 bg-rose-600 text-white font-bold rounded-xl text-xs hover:bg-rose-700 shadow">Confirmar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL 7: DEPURAR / ELIMINAR DATOS ANTERIORES POR FECHA (SOLO SUPER ADMIN) -->
+    <div id="modal-purge" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 overflow-hidden fade-in">
+            <div class="bg-rose-900 text-white p-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="database-backup" class="w-5 h-5 text-amber-300"></i>
+                    <h3 class="text-sm font-extrabold">Eliminar Registros Anteriores</h3>
+                </div>
+                <button onclick="closePurgeModal()" class="text-rose-200 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form onsubmit="handlePurgeLeads(event)" class="p-5 space-y-4">
+                <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-xs text-rose-900 space-y-1">
+                    <p class="font-extrabold flex items-center gap-1.5 text-rose-700">
+                        <i data-lucide="shield-alert" class="w-4 h-4"></i> Zona de Seguridad (Super Admin)
+                    </p>
+                    <p class="text-[11px] text-rose-700/90 leading-relaxed">
+                        Selecciona el rango de fechas de los leads que deseas eliminar permanentemente de la base de datos de Supabase.
+                    </p>
+                </div>
+
+                <!-- Rango de fechas -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Desde Fecha *</label>
+                        <input type="date" id="purge-date-from" required onchange="updatePurgePreview()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-rose-600">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Hasta Fecha *</label>
+                        <input type="date" id="purge-date-to" required onchange="updatePurgePreview()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-rose-600">
+                    </div>
+                </div>
+
+                <!-- Vista previa y opción de Respaldo en Excel -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-600">Registros en este rango:</span>
+                        <span id="purge-count-badge" class="bg-rose-100 text-rose-800 font-black px-2.5 py-0.5 rounded-full text-xs">0 leads</span>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-200/80 flex flex-col gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-emerald-800 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 hover:bg-emerald-100 transition-all">
+                            <input type="checkbox" id="purge-auto-backup" checked class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+                            <span>Descargar respaldo en Excel automáticamente antes de eliminar</span>
+                        </label>
+
+                        <button type="button" onclick="downloadPurgeRangeExcel()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Descargar Excel de este Rango Ahora
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirmación con Contraseña -->
+                <div class="pt-1">
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Confirma tu Contraseña de Super Admin *</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="purge-password" required placeholder="Ingresa tu contraseña actual para autorizar" class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-rose-600">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closePurgeModal()" class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-confirm-purge" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Registros
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -746,7 +853,7 @@
             { username: 'admin', pass: 'admin', name: 'Administrador General', role: 'SUPER_ADMIN' },
             { username: 'jackson', pass: 'jackson123', name: 'Jackson', role: 'CARGA' },
             { username: 'madelen', pass: 'madelen123', name: 'Madelen', role: 'CARGA' },
-            { username: 'visor1', pass: 'visor123', name: 'Visualizador Manta 1', role: 'VISOR' }
+            { username: 'visor1', pass: 'visor123', name: 'Visualizador Zona 4', role: 'VISOR' }
         ];
 
         // --- INICIALIZACIÓN Y EVENTOS DOM ---
@@ -797,6 +904,38 @@
             }
         }
 
+        // --- VERIFICACIÓN SEGURA DE CONTRASEÑA DE USUARIO ACTUAL ---
+        async function verifyUserPassword(inputPass) {
+            if (!currentUser || !inputPass) return false;
+
+            // 1. Validar con la contraseña en memoria de la sesión actual
+            if (currentUser.password && currentUser.password === inputPass) return true;
+            if (currentUser.pass && currentUser.pass === inputPass) return true;
+
+            // 2. Validar contra Supabase en tiempo real
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('app_users')
+                        .select('password')
+                        .eq('username', currentUser.username.toLowerCase())
+                        .maybeSingle();
+
+                    if (!error && data && data.password === inputPass) {
+                        return true;
+                    }
+                } catch (err) {
+                    console.warn("Error verificando contraseña en Supabase:", err);
+                }
+            }
+
+            // 3. Validar contra cuentas predeterminadas
+            const foundDefault = DEFAULT_USERS.find(
+                u => u.username.toLowerCase() === currentUser.username.toLowerCase() && u.pass === inputPass
+            );
+            return !!foundDefault;
+        }
+
         // --- MANEJO DE AUTENTICACIÓN ---
         async function handleLogin(e) {
             e.preventDefault();
@@ -817,9 +956,9 @@
 
                     if (!error && data) {
                         if (data.password && data.password === pInput) {
-                            userMatch = data;
+                            userMatch = { ...data, pass: pInput };
                         } else if (!data.password && pInput.length > 0) {
-                            userMatch = data; // Compatibilidad inicial sin clave almacenada
+                            userMatch = { ...data, pass: pInput };
                         }
                     }
                 } catch (err) {
@@ -831,14 +970,14 @@
             if (!userMatch) {
                 const foundDefault = DEFAULT_USERS.find(user => user.username.toLowerCase() === uInput && user.pass === pInput);
                 if (foundDefault) {
-                    userMatch = foundDefault;
+                    userMatch = { ...foundDefault, password: pInput };
                 }
             }
 
             if (userMatch) {
                 currentUser = userMatch;
                 sessionStorage.setItem('utpl_manta_active_user', JSON.stringify(currentUser));
-                showToast(`¡Bienvenido/a, ${currentUser.name}!`, "success");
+                showToast(`¡Bienvenido/a a UTPL Zona 4, ${currentUser.name}!`, "success");
                 showApp();
             } else {
                 showToast("Usuario o contraseña incorrectos", "error");
@@ -859,6 +998,7 @@
 
             document.getElementById('sidebar-user-name').textContent = currentUser.name;
             document.getElementById('sidebar-user-role').textContent = currentUser.role;
+            document.getElementById('sidebar-user-description').textContent = currentUser.name;
             document.getElementById('sidebar-user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
 
             // Alcance estricto de datos por función
@@ -866,6 +1006,12 @@
                 statsScope = 'all'; // Acceso total
             } else {
                 statsScope = 'mine'; // Operadores solo ven sus registros
+            }
+
+            // Inicializar fecha del formulario si está vacía
+            const fechaInput = document.getElementById('lead-fecha');
+            if (fechaInput && !fechaInput.value) {
+                fechaInput.value = new Date().toISOString().split('T')[0];
             }
 
             // Asignación automática del promotor para operadores
@@ -891,10 +1037,10 @@
         function switchView(viewName) {
             // Restricción de navegación
             if (currentUser.role === 'VISOR' && viewName === 'form') {
-                viewName = 'dashboard'; // El visualizador es redirigido al panel principal
+                viewName = 'dashboard';
             }
             if (currentUser.role === 'CARGA' && (viewName === 'growth' || viewName === 'analytics')) {
-                viewName = 'dashboard'; // El operador se enfoca en sus datos
+                viewName = 'dashboard';
             }
 
             activeView = viewName;
@@ -920,6 +1066,7 @@
 
         function setupRoleInterface(role) {
             const btnUsers = document.getElementById('btn-manage-users');
+            const btnPurge = document.getElementById('btn-purge-leads');
             const navLinks = document.getElementById('sidebar-nav-links');
             const banner = document.getElementById('role-welcome-banner');
             const bannerTitle = document.getElementById('role-banner-title');
@@ -931,16 +1078,20 @@
             // 1. SUPER ADMINISTRADOR (Tito / Admin)
             if (role === 'SUPER_ADMIN') {
                 btnUsers.classList.remove('hidden');
+                if (btnPurge) btnPurge.classList.remove('hidden');
                 if (statsScopeSelector) statsScopeSelector.classList.remove('hidden');
 
                 banner.className = "rounded-2xl p-5 text-white shadow-md bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
                 bannerIcon.innerHTML = `<i data-lucide="shield-check" class="w-6 h-6 text-amber-400"></i>`;
-                bannerTitle.innerHTML = `Centro Administrador <span class="bg-amber-400 text-blue-950 text-[10px] px-2 py-0.5 rounded-full font-extrabold">ACCESO TOTAL</span>`;
-                bannerSub.textContent = "Supervisión general de promotores (Jackson, Madelen), gestión de usuarios y generación de informes PDF/Excel.";
+                bannerTitle.innerHTML = `Centro Administrador UTPL Zona 4 <span class="bg-amber-400 text-blue-950 text-[10px] px-2 py-0.5 rounded-full font-extrabold">ACCESO TOTAL</span>`;
+                bannerSub.textContent = "Supervisión general de promotores, depuración de base de datos por fechas, gestión de usuarios y exportación PDF/Excel.";
 
                 bannerPills.innerHTML = `
                     <button onclick="switchView('form')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/20">
                         <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amber-300"></i> Nuevo Lead
+                    </button>
+                    <button onclick="openPurgeModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 rounded-xl text-xs font-bold transition-all border border-rose-700/60">
+                        <i data-lucide="database-backup" class="w-3.5 h-3.5 text-rose-400"></i> Eliminar Antiguos
                     </button>
                     <button onclick="exportToPDF()" class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
                         <i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF General
@@ -969,6 +1120,9 @@
                     <button onclick="openUserModal(); closeSidebar();" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-blue-900 transition-all">
                         <i data-lucide="users" class="w-4 h-4"></i> Gestión de Usuarios
                     </button>
+                    <button onclick="openPurgeModal(); closeSidebar();" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-950/60 transition-all border border-rose-900/40 mt-2">
+                        <i data-lucide="database-backup" class="w-4 h-4 text-rose-400"></i> Eliminar Datos Anteriores
+                    </button>
                 `;
 
                 document.getElementById('sidebar-role-description').textContent = 'Super Administrador';
@@ -976,6 +1130,7 @@
             // 2. OPERADOR / PROMOTOR (Jackson / Madelen)
             } else if (role === 'CARGA') {
                 btnUsers.classList.add('hidden');
+                if (btnPurge) btnPurge.classList.add('hidden');
                 if (statsScopeSelector) statsScopeSelector.classList.add('hidden');
 
                 banner.className = "rounded-2xl p-5 text-white shadow-md bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 border border-blue-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
@@ -1013,12 +1168,13 @@
             // 3. VISUALIZADOR (Visor - Consulta Ejecutivo)
             } else if (role === 'VISOR') {
                 btnUsers.classList.add('hidden');
+                if (btnPurge) btnPurge.classList.add('hidden');
                 if (statsScopeSelector) statsScopeSelector.classList.add('hidden');
 
                 banner.className = "rounded-2xl p-5 text-white shadow-md bg-gradient-to-r from-emerald-950 via-teal-900 to-blue-950 border border-teal-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4";
                 bannerIcon.innerHTML = `<i data-lucide="file-spreadsheet" class="w-6 h-6 text-emerald-300"></i>`;
-                bannerTitle.innerHTML = `Panel Ejecutivo de Consulta <span class="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">SOLO LECTURA</span>`;
-                bannerSub.textContent = "Consulta de registros globales de la UTPL Centro Manta, cuadro de incremento por día y descarga de informes PDF/Excel.";
+                bannerTitle.innerHTML = `Panel Ejecutivo UTPL Zona 4 <span class="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">SOLO LECTURA</span>`;
+                bannerSub.textContent = "Consulta de registros globales de la UTPL Zona 4, cuadro de incremento por día y descarga de informes PDF/Excel.";
 
                 bannerPills.innerHTML = `
                     <button onclick="exportToExcel()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
@@ -1085,6 +1241,12 @@
 
         function getActiveFilteredDataset() {
             let base = getUserFilteredDataset();
+
+            // Sincronizar los inputs de fecha dinámicamente (Corrección de sincronización)
+            const dateFromEl = document.getElementById('filter-date-from');
+            const dateToEl = document.getElementById('filter-date-to');
+            filterDateFrom = dateFromEl ? dateFromEl.value : '';
+            filterDateTo = dateToEl ? dateToEl.value : '';
 
             // Búsqueda por texto
             const searchVal = document.getElementById('filter-search')?.value.toLowerCase().trim();
@@ -1192,6 +1354,124 @@
             });
         }
 
+        // --- MÓDULO DE DEPURACIÓN / ELIMINACIÓN DE REGISTROS ANTERIORES POR RANGO DE FECHA (SOLO SUPER ADMIN) ---
+        function openPurgeModal() {
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+                showToast("Acceso denegado: Función exclusiva para Super Admin", "error");
+                return;
+            }
+
+            document.getElementById('purge-date-from').value = '';
+            document.getElementById('purge-date-to').value = '';
+            document.getElementById('purge-password').value = '';
+            document.getElementById('purge-auto-backup').checked = true;
+            document.getElementById('purge-count-badge').textContent = '0 leads';
+
+            document.getElementById('modal-purge').classList.remove('hidden');
+            safeCreateIcons();
+        }
+
+        function closePurgeModal() {
+            document.getElementById('modal-purge').classList.add('hidden');
+        }
+
+        function getPurgeMatchingLeads() {
+            const fromDate = document.getElementById('purge-date-from').value;
+            const toDate = document.getElementById('purge-date-to').value;
+
+            if (!fromDate || !toDate) return [];
+            return leadsData.filter(l => l.fecha && l.fecha >= fromDate && l.fecha <= toDate);
+        }
+
+        function updatePurgePreview() {
+            const matches = getPurgeMatchingLeads();
+            const badge = document.getElementById('purge-count-badge');
+            if (badge) {
+                badge.textContent = `${matches.length} leads`;
+            }
+        }
+
+        function downloadPurgeRangeExcel() {
+            const fromDate = document.getElementById('purge-date-from').value;
+            const toDate = document.getElementById('purge-date-to').value;
+
+            if (!fromDate || !toDate) {
+                showToast("Selecciona primero las fechas Desde y Hasta", "error");
+                return false;
+            }
+
+            const matches = getPurgeMatchingLeads();
+            if (matches.length === 0) {
+                showToast("No existen registros en el rango de fechas seleccionado", "error");
+                return false;
+            }
+
+            generateExcelFromDataset(matches, `Respaldo_Leads_UTPL_Zona4_${fromDate}_a_${toDate}.xls`, `UTPL Zona 4 - Respaldo de Leads (${fromDate} al ${toDate})`);
+            return true;
+        }
+
+        async function handlePurgeLeads(e) {
+            e.preventDefault();
+
+            if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+                showToast("Solo el Super Administrador puede eliminar datos masivamente", "error");
+                return;
+            }
+
+            const fromDate = document.getElementById('purge-date-from').value;
+            const toDate = document.getElementById('purge-date-to').value;
+            const passInput = document.getElementById('purge-password').value.trim();
+            const autoBackup = document.getElementById('purge-auto-backup').checked;
+
+            if (!fromDate || !toDate) {
+                showToast("Selecciona el rango completo de fechas", "error");
+                return;
+            }
+
+            if (fromDate > toDate) {
+                showToast("La fecha inicial no puede ser mayor que la fecha final", "error");
+                return;
+            }
+
+            const matches = getPurgeMatchingLeads();
+            if (matches.length === 0) {
+                showToast("No hay registros para eliminar en ese rango de fechas", "error");
+                return;
+            }
+
+            // Verificar contraseña del Super Admin
+            showToast("Verificando autorización de Super Admin...", "info");
+            const isAuthorized = await verifyUserPassword(passInput);
+
+            if (!isAuthorized) {
+                showToast("Contraseña incorrecta. No se autorizó la eliminación.", "error");
+                return;
+            }
+
+            // Si seleccionó descargar respaldo en Excel antes de borrar
+            if (autoBackup) {
+                generateExcelFromDataset(matches, `Respaldo_Eliminados_UTPL_Zona4_${fromDate}_a_${toDate}.xls`, `UTPL Zona 4 - Respaldo Pre-Eliminación (${fromDate} al ${toDate})`);
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('leads')
+                    .delete()
+                    .gte('fecha', fromDate)
+                    .lte('fecha', toDate);
+
+                if (error) throw error;
+
+                showToast(`Se eliminaron ${matches.length} registros del rango ${fromDate} a ${toDate}`, "success");
+                closePurgeModal();
+                await fetchLeadsFromSupabase(false);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Error al eliminar registros en Supabase: " + (err.message || "Error de red"), "error");
+            }
+        }
+
         // --- OBTENCIÓN Y GUARDADO DE DATOS CON SUPABASE ---
         async function fetchLeadsFromSupabase(showNotification = true) {
             if (!supabaseClient) return;
@@ -1285,10 +1565,10 @@
             
             document.getElementById('form-title').textContent = 'Registrar Nuevo Lead';
 
-            if (currentUser.role === 'CARGA') {
+            if (currentUser && currentUser.role === 'CARGA') {
                 document.getElementById('lead-promotor').value = currentUser.name;
             } else {
-                document.getElementById('lead-promotor').value = '';
+                document.getElementById('lead-promotor').value = currentUser ? currentUser.name : '';
             }
         }
 
@@ -1365,7 +1645,7 @@
                     .eq('id', id);
 
                 if (error) throw error;
-                showToast(!currentStatus ? "Marcar como URGENTE 🚨" : "Prioridad removida", "info");
+                showToast(!currentStatus ? "Marcado como URGENTE 🚨" : "Prioridad removida", "info");
                 fetchLeadsFromSupabase(false);
             } catch (err) {
                 showToast("Error actualizando prioridad", "error");
@@ -1389,7 +1669,6 @@
 
             showToast("Generando Reporte PDF institucional...", "info");
 
-            // Dataset correspondiente al usuario actual
             const dataToExport = getActiveFilteredDataset();
 
             if (dataToExport.length === 0) {
@@ -1397,21 +1676,18 @@
                 return;
             }
 
-            // Cálculo de totales
             const total = dataToExport.length;
             const tecCount = dataToExport.filter(d => d.tipo === 'TEC').length;
             const melCount = dataToExport.filter(d => d.tipo === 'MEL').length;
             const posCount = dataToExport.filter(d => d.tipo === 'POS').length;
-            const urgentCount = dataToExport.filter(d => d.urgente).length;
 
-            // Construcción del HTML dinámico para el informe
             const reportContainer = document.createElement('div');
             reportContainer.className = "p-8 font-sans bg-white text-slate-900";
 
             reportContainer.innerHTML = `
                 <div style="border-bottom: 2px solid #0c2340; padding-bottom: 12px; margin-bottom: 20px;" class="flex items-center justify-between">
                     <div>
-                        <h1 style="color: #0c2340; font-size: 20px; font-weight: 900; margin: 0;">UTPL CENTRO MANTA</h1>
+                        <h1 style="color: #0c2340; font-size: 20px; font-weight: 900; margin: 0;">UTPL ZONA 4</h1>
                         <p style="color: #475569; font-size: 12px; margin: 2px 0 0 0;">Reporte Oficial de Gestión de Leads</p>
                     </div>
                     <div style="text-align: right;">
@@ -1472,13 +1748,13 @@
                 </table>
 
                 <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 8px; color: #94a3b8; text-align: center;">
-                    Documento generado automáticamente por el Sistema de Leads UTPL Centro Manta.
+                    Documento generado automáticamente por el Sistema de Leads UTPL Zona 4.
                 </div>
             `;
 
             const opt = {
                 margin:       [0.4, 0.4, 0.4, 0.4],
-                filename:     `Reporte_Leads_UTPL_Manta_${currentUser.username}_${new Date().toISOString().split('T')[0]}.pdf`,
+                filename:     `Reporte_Leads_UTPL_Zona4_${currentUser.username}_${new Date().toISOString().split('T')[0]}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -1492,22 +1768,13 @@
             });
         }
 
-        // --- EXPORTACIÓN EXCEL ---
-        function exportToExcel() {
-            if (!currentUser) return;
-
-            const dataToExport = getActiveFilteredDataset();
-
-            if (dataToExport.length === 0) {
-                showToast("No hay registros para exportar", "error");
-                return;
-            }
-
+        // --- EXPORTACIÓN EXCEL REUTILIZABLE ---
+        function generateExcelFromDataset(dataset, filename, titleText) {
             let tableHTML = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
             <head><meta charset="UTF-8"></head>
             <body>
-                <h2>UTPL Centro Manta - Reporte de Leads (${currentUser.name})</h2>
+                <h2>${titleText}</h2>
                 <table border="1">
                     <thead>
                         <tr style="background-color: #0c2340; color: #ffffff;">
@@ -1525,7 +1792,7 @@
                     </thead>
                     <tbody>`;
 
-            dataToExport.forEach(item => {
+            dataset.forEach(item => {
                 tableHTML += `
                     <tr>
                         <td>${item.fecha}</td>
@@ -1546,10 +1813,27 @@
             const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Reporte_Leads_UTPL_Manta_${new Date().toISOString().split('T')[0]}.xls`;
+            link.download = filename;
             link.click();
 
-            showToast("Reporte en Excel descargado", "success");
+            showToast("Archivo Excel descargado con éxito", "success");
+        }
+
+        function exportToExcel() {
+            if (!currentUser) return;
+
+            const dataToExport = getActiveFilteredDataset();
+
+            if (dataToExport.length === 0) {
+                showToast("No hay registros para exportar", "error");
+                return;
+            }
+
+            generateExcelFromDataset(
+                dataToExport,
+                `Reporte_Leads_UTPL_Zona4_${new Date().toISOString().split('T')[0]}.xls`,
+                `UTPL Zona 4 - Reporte de Leads (${currentUser.name})`
+            );
         }
 
         // --- RENDERIZADO DE TABLA DE LEADS PRINCIPAL ---
@@ -1559,6 +1843,10 @@
             tbody.innerHTML = '';
 
             const filteredData = getActiveFilteredDataset();
+            const countBadge = document.getElementById('leads-filtered-count');
+            if (countBadge) {
+                countBadge.textContent = `${filteredData.length} registros`;
+            }
 
             if (filteredData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 font-medium">No se encontraron leads con los criterios seleccionados.</td></tr>`;
@@ -1723,7 +2011,7 @@
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
 
-            const fullLabels = topCarreras.map(c => c[0]); // Guardamos el nombre completo para el filtro
+            const fullLabels = topCarreras.map(c => c[0]);
 
             const ctx2 = document.getElementById('chart-carreras-top')?.getContext('2d');
             if (ctx2) {
@@ -1754,7 +2042,7 @@
 
         // --- NAVEGACIÓN DESDE DASHBOARD A DETALLES (Drill-Down) ---
         function filterAndNavigate(type, value) {
-            clearAllFilters(); // Reseteamos filtros primero
+            clearAllFilters();
 
             if (type === 'tipo') {
                 const tipoSelect = document.getElementById('filter-tipo');
@@ -1764,7 +2052,6 @@
                 if (searchInput) searchInput.value = value;
             }
 
-            // Cambiamos a la vista de reporte detallado (esto aplicará el filtro y renderizará la tabla)
             switchView('leads');
         }
 
@@ -1922,8 +2209,12 @@
                     // Notificación de correos sin leer
                     const unread = messagesData.filter(m => m.recipient_username === currentUser.username && !m.is_read);
                     const badge = document.getElementById('unread-badge');
+                    const inboxCount = document.getElementById('mail-inbox-count');
                     if (badge) {
                         badge.classList.toggle('hidden', unread.length === 0);
+                    }
+                    if (inboxCount) {
+                        inboxCount.textContent = unread.length;
                     }
                 }
             } catch (err) {
@@ -1973,14 +2264,25 @@
             });
         }
 
-        function openNewMailModal() {
+        function openNewMailModal(preRecipient = '', preSubject = '') {
             const select = document.getElementById('mail-recipient-select');
             select.innerHTML = '';
 
-            const recipients = usersData.filter(u => u.username !== currentUser.username);
+            const allRecipients = [...usersData];
+            DEFAULT_USERS.forEach(du => {
+                if (!allRecipients.some(u => u.username === du.username)) {
+                    allRecipients.push(du);
+                }
+            });
+
+            const recipients = allRecipients.filter(u => u.username !== currentUser.username);
             recipients.forEach(u => {
                 select.innerHTML += `<option value="${u.username}">${u.name} (${u.role})</option>`;
             });
+
+            if (preRecipient) select.value = preRecipient;
+            document.getElementById('mail-subject-input').value = preSubject;
+            document.getElementById('mail-body-input').value = '';
 
             document.getElementById('modal-new-mail').classList.remove('hidden');
         }
@@ -1995,7 +2297,7 @@
             const subject = document.getElementById('mail-subject-input').value.trim();
             const body = document.getElementById('mail-body-input').value.trim();
 
-            const recipientObj = usersData.find(u => u.username === recipientUsername);
+            const recipientObj = usersData.find(u => u.username === recipientUsername) || DEFAULT_USERS.find(u => u.username === recipientUsername);
 
             try {
                 const { error } = await supabaseClient.from('internal_messages').insert([{
@@ -2019,24 +2321,44 @@
         }
 
         async function openReadMailModal(msg) {
-            // Marcar como leído
-            if (!msg.is_read && msg.recipient_username === currentUser.username) {
+            if (!msg.is_read && msg.recipient_username === currentUser.username && supabaseClient) {
                 await supabaseClient.from('internal_messages').update({ is_read: true }).eq('id', msg.id);
                 msg.is_read = true;
             }
-            alert(`DE: ${msg.sender_name}\nASUNTO: ${msg.subject}\n\nMENSAJE:\n${msg.body}`);
+
+            document.getElementById('read-mail-sender').textContent = `De: ${msg.sender_name}`;
+            document.getElementById('read-mail-date').textContent = new Date(msg.created_at).toLocaleString();
+            document.getElementById('read-mail-subject').textContent = msg.subject;
+            document.getElementById('read-mail-body').textContent = msg.body;
+
+            const replyBtn = document.getElementById('btn-reply-mail');
+            replyBtn.onclick = () => {
+                closeReadMailModal();
+                const replySubj = msg.subject.startsWith('Re:') ? msg.subject : `Re: ${msg.subject}`;
+                openNewMailModal(msg.sender_username, replySubj);
+            };
+
+            document.getElementById('modal-read-mail').classList.remove('hidden');
             renderMailbox();
+            safeCreateIcons();
         }
 
-        // --- GESTIÓN DE USUARIOS (SUPER ADMIN) ---
+        function closeReadMailModal() {
+            document.getElementById('modal-read-mail').classList.add('hidden');
+        }
+
+        // --- GESTIÓN DE USUARIOS COMPLETA CRUD (SUPER ADMIN) ---
         async function fetchUsersList() {
-            if (!supabaseClient || currentUser?.role !== 'SUPER_ADMIN') return;
+            if (!supabaseClient) return;
 
             try {
-                const { data, error } = await supabaseClient.from('app_users').select('*');
+                const { data, error } = await supabaseClient.from('app_users').select('*').order('created_at', { ascending: true });
                 if (!error && data) {
                     usersData = data;
-                    renderUsersTable();
+                    updatePromoterDropdowns();
+                    if (currentUser?.role === 'SUPER_ADMIN') {
+                        renderUsersTable();
+                    }
                 }
             } catch (err) {
                 console.error("Error usuarios", err);
@@ -2048,16 +2370,27 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            if (usersData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay usuarios en la tabla app_users.</td></tr>`;
+                return;
+            }
+
             usersData.forEach(u => {
                 const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
                 tr.innerHTML = `
                     <td class="p-2.5 font-bold text-slate-800">${u.name}</td>
                     <td class="p-2.5 font-mono text-slate-600">${u.username}</td>
                     <td class="p-2.5 font-bold text-blue-900">${u.role}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="deleteUser('${u.id}')" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Eliminar Usuario">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="editExistingUser('${u.id}')" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Editar Rol / Clave">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteUser('${u.id}')" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Eliminar Usuario">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2065,7 +2398,22 @@
             safeCreateIcons();
         }
 
+        function editExistingUser(id) {
+            const u = usersData.find(item => item.id === id);
+            if (!u) return;
+
+            document.getElementById('user-edit-id').value = u.id;
+            document.getElementById('user-input-name').value = u.name;
+            document.getElementById('user-input-username').value = u.username;
+            document.getElementById('user-input-password').value = u.password || '';
+            document.getElementById('user-input-role').value = u.role;
+
+            document.getElementById('user-form-title').textContent = `Editando Usuario: ${u.username}`;
+            document.getElementById('user-submit-btn').textContent = 'Actualizar Usuario';
+        }
+
         function openUserModal() {
+            resetUserForm();
             document.getElementById('modal-users').classList.remove('hidden');
             fetchUsersList();
         }
@@ -2076,35 +2424,50 @@
 
         async function handleSaveUser(e) {
             e.preventDefault();
+            const editId = document.getElementById('user-edit-id').value;
             const name = document.getElementById('user-input-name').value.trim();
             const username = document.getElementById('user-input-username').value.trim().toLowerCase();
             const password = document.getElementById('user-input-password').value.trim();
             const role = document.getElementById('user-input-role').value;
 
             try {
-                const { error } = await supabaseClient.from('app_users').insert([{
-                    name, username, password, role
-                }]);
+                if (editId) {
+                    const { error } = await supabaseClient
+                        .from('app_users')
+                        .update({ name, username, password, role })
+                        .eq('id', editId);
 
-                if (error) throw error;
+                    if (error) throw error;
+                    showToast("Usuario actualizado correctamente", "success");
+                } else {
+                    const { error } = await supabaseClient
+                        .from('app_users')
+                        .insert([{ name, username, password, role }]);
 
-                showToast("Usuario creado en Supabase", "success");
+                    if (error) throw error;
+                    showToast("Usuario creado en Supabase", "success");
+                }
+
                 resetUserForm();
                 fetchUsersList();
 
             } catch (err) {
-                showToast("Error creando usuario: " + err.message, "error");
+                showToast("Error guardando usuario: " + err.message, "error");
             }
         }
 
         function resetUserForm() {
+            document.getElementById('user-edit-id').value = '';
             document.getElementById('user-input-name').value = '';
             document.getElementById('user-input-username').value = '';
             document.getElementById('user-input-password').value = '';
+            document.getElementById('user-input-role').value = 'CARGA';
+            document.getElementById('user-form-title').textContent = 'Registrar Nuevo Usuario';
+            document.getElementById('user-submit-btn').textContent = 'Guardar Usuario';
         }
 
         async function deleteUser(id) {
-            const confirm = await openConfirmModal("¿Eliminar Usuario?", "Esta cuenta perderá el acceso.");
+            const confirm = await openConfirmModal("¿Eliminar Usuario?", "Esta cuenta perderá el acceso al sistema.");
             if (!confirm) return;
 
             try {
@@ -2119,6 +2482,7 @@
 
         // --- CAMBIAR CONTRASEÑA ---
         function openChangePasswordModal() {
+            document.getElementById('new-password-input').value = '';
             document.getElementById('modal-password').classList.remove('hidden');
         }
 
@@ -2137,6 +2501,10 @@
 
                 if (error) throw error;
 
+                currentUser.password = newPass;
+                currentUser.pass = newPass;
+                sessionStorage.setItem('utpl_manta_active_user', JSON.stringify(currentUser));
+
                 showToast("Contraseña actualizada con éxito", "success");
                 closeChangePasswordModal();
 
@@ -2152,8 +2520,14 @@
             if (!lead) return;
 
             document.getElementById('bitacora-lead-name').textContent = `${lead.nombre} (${lead.carrera})`;
-            document.getElementById('modal-bitacora').classList.remove('hidden');
+            
+            // Ocultar formulario de escritura si el usuario es VISOR
+            const inputSection = document.getElementById('bitacora-input-section');
+            if (inputSection) {
+                inputSection.classList.toggle('hidden', currentUser?.role === 'VISOR');
+            }
 
+            document.getElementById('modal-bitacora').classList.remove('hidden');
             renderBitacoraNotes(lead);
         }
 
@@ -2192,6 +2566,8 @@
         }
 
         async function addBitacoraNote() {
+            if (currentUser?.role === 'VISOR') return;
+
             const input = document.getElementById('bitacora-note-input');
             const text = input.value.trim();
             if (!text || !currentEditingBitacoraLeadId) return;
